@@ -1,4 +1,4 @@
-# file_operations.py
+# file_operations.py (zaktualizowana funkcja move_files)
 import os
 import shutil
 import tkinter as tk
@@ -9,6 +9,9 @@ from datetime import datetime
 
 from models import FileInfo
 from file_analyzer import get_mime_type, get_file_signature, extract_keywords, analyze_headers
+from category_analyzer import CategoryAnalyzer
+
+category_analyzer = CategoryAnalyzer()
 
 
 def select_files():
@@ -106,6 +109,16 @@ def move_files(files, destination):
             keywords = extract_keywords(file_path)
             headers_info = analyze_headers(file_path)
 
+            # Kategoryzacja pliku
+            categorization = category_analyzer.categorize_file(file_path)
+            category_extension = categorization['kategoria_rozszerzenia']
+            category_name = categorization['kategoria_nazwy']
+            suggested_locations = categorization['sugerowane_lokalizacje']
+
+
+            print(f"Analizuję plik: {file_name}")
+            print(f"  Kategorie z nazwy: {category_name}")
+
             # Sprawdzenie, czy plik już istnieje w folderze docelowym
             if os.path.exists(destination_path):
                 response = messagebox.askyesno(
@@ -116,19 +129,28 @@ def move_files(files, destination):
                     files_info.append(FileInfo(
                         name, extension, file_path, "", "Pominięto",
                         file_size, creation_date, modification_date, attributes,
-                        mime_type, file_signature, keywords, headers_info
+                        mime_type, file_signature, keywords, headers_info,
+                        category_extension, category_name, suggested_locations
                     ))
                     continue
 
             # Przeniesienie pliku
             shutil.move(file_path, destination_path)
 
-            # Dodanie informacji o pliku do listy
-            files_info.append(FileInfo(
+            # Utworzenie obiektu z informacjami o pliku
+            file_info = FileInfo(
                 name, extension, file_path, destination_path, "Przeniesiono",
                 file_size, creation_date, modification_date, attributes,
-                mime_type, file_signature, keywords, headers_info
-            ))
+                mime_type, file_signature, keywords, headers_info,
+                category_extension, category_name, suggested_locations
+            )
+
+            # Zapisanie informacji o przeniesieniu w historii
+            category_analyzer.record_transfer(file_info)
+
+            # Dodanie informacji o pliku do listy
+            files_info.append(file_info)
+
         except Exception as e:
             # W przypadku błędu, próbujemy zebrać jak najwięcej informacji
             try:
@@ -143,6 +165,18 @@ def move_files(files, destination):
                 file_signature = "Nieznany (błąd)"
                 keywords = "Nie udało się przeanalizować"
                 headers_info = "Nie udało się przeanalizować"
+
+                # Próbujemy uzyskać informacje o kategoryzacji
+                try:
+                    categorization = category_analyzer.categorize_file(file_path)
+                    category_extension = categorization['kategoria_rozszerzenia']
+                    category_name = categorization['kategoria_nazwy']
+                    suggested_locations = categorization['sugerowane_lokalizacje']
+                except:
+                    category_extension = "Nieznana"
+                    category_name = []
+                    suggested_locations = []
+
             except:
                 file_size = 0
                 creation_date = "Nieznany"
@@ -152,6 +186,9 @@ def move_files(files, destination):
                 file_signature = "Nieznany (błąd)"
                 keywords = "Nie udało się przeanalizować"
                 headers_info = "Nie udało się przeanalizować"
+                category_extension = "Nieznana"
+                category_name = []
+                suggested_locations = []
 
             files_info.append(FileInfo(
                 os.path.splitext(os.path.basename(file_path))[0],
@@ -160,7 +197,8 @@ def move_files(files, destination):
                 "",
                 f"Błąd: {str(e)}",
                 file_size, creation_date, modification_date, attributes,
-                mime_type, file_signature, keywords, headers_info
+                mime_type, file_signature, keywords, headers_info,
+                category_extension, category_name, suggested_locations
             ))
             print(f"Błąd podczas przenoszenia pliku {file_path}: {e}")
 

@@ -49,6 +49,7 @@ def setup_ui(root, start_moving_process):
     close_button.pack(pady=10)
 
 
+# gui_components.py - kompletna funkcja show_files_table
 def show_files_table(files_info):
     """Funkcja wyświetlająca tabelę z informacjami o przeniesionych plikach"""
     if not files_info:
@@ -71,6 +72,10 @@ def show_files_table(files_info):
     # Zakładka 2: Zaawansowane informacje
     advanced_frame = ttk.Frame(notebook)
     notebook.add(advanced_frame, text="Zaawansowane informacje")
+
+    # Zakładka 3: Kategoryzacja
+    category_frame = ttk.Frame(notebook)
+    notebook.add(category_frame, text="Kategoryzacja")
 
     # Utworzenie tabeli z podstawowymi informacjami
     basic_columns = (
@@ -137,6 +142,49 @@ def show_files_table(files_info):
     advanced_scrollbar_y.pack(side="right", fill="y")
     advanced_scrollbar_x.pack(side="bottom", fill="x")
     advanced_tree.pack(fill="both", expand=True)
+
+    # Utworzenie tabeli z informacjami o kategoryzacji
+    category_columns = (
+        "Nazwa", "Rozszerzenie", "Kategoria pliku", "Kategorie z nazwy", "Sugerowane lokalizacje"
+    )
+    category_tree = ttk.Treeview(category_frame, columns=category_columns, show="headings")
+
+    # Definicja nagłówków kolumn dla kategoryzacji
+    for col in category_columns:
+        category_tree.heading(col, text=col)
+        if col in ["Sugerowane lokalizacje"]:
+            category_tree.column(col, width=400)  # Szersze kolumny dla dłuższych tekstów
+        elif col in ["Kategorie z nazwy"]:
+            category_tree.column(col, width=200)
+        else:
+            category_tree.column(col, width=150)
+
+    # Dodanie danych do tabeli kategoryzacji
+    for file_info in files_info:
+        # Formatowanie listy kategorii z nazwy
+        name_categories = ", ".join(file_info.category_name) if file_info.category_name else "Brak"
+
+        # Formatowanie sugerowanych lokalizacji
+        suggested_locs = []
+        for loc, reason, count in file_info.suggested_locations:
+            suggested_locs.append(f"{loc} ({reason}, {count} razy)")
+        suggested_locations_str = "\n".join(suggested_locs) if suggested_locs else "Brak sugestii"
+
+        category_tree.insert("", "end", values=(
+            file_info.name,
+            file_info.extension,
+            file_info.category_extension,
+            name_categories,
+            suggested_locations_str
+        ))
+
+    # Dodanie paska przewijania dla tabeli kategoryzacji
+    category_scrollbar_y = ttk.Scrollbar(category_frame, orient="vertical", command=category_tree.yview)
+    category_scrollbar_x = ttk.Scrollbar(category_frame, orient="horizontal", command=category_tree.xview)
+    category_tree.configure(yscrollcommand=category_scrollbar_y.set, xscrollcommand=category_scrollbar_x.set)
+    category_scrollbar_y.pack(side="right", fill="y")
+    category_scrollbar_x.pack(side="bottom", fill="x")
+    category_tree.pack(fill="both", expand=True)
 
     # Przycisk do eksportu danych
     export_button = tk.Button(

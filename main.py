@@ -1,4 +1,3 @@
-# main.py
 import tkinter as tk
 from tkinter import messagebox
 import os
@@ -10,9 +9,8 @@ if current_dir not in sys.path:
     sys.path.append(current_dir)
 
 # Importujemy funkcje bezpośrednio
-from file_operations import select_files, select_destination, move_files
+from file_operations import select_files, select_destination, move_files, category_analyzer
 from gui_components import create_main_window, setup_ui, show_files_table
-
 
 def main():
     """Główna funkcja programu"""
@@ -31,10 +29,39 @@ def main():
             messagebox.showinfo("Informacja", "Nie wybrano żadnych plików.")
             return
 
-        destination = select_destination()
+        # Sprawdź czy istnieją sugerowane lokalizacje
+        suggested_destinations = {}
+        for file_path in files:
+            suggested = category_analyzer.get_suggested_destination(file_path)
+            if suggested:
+                if suggested not in suggested_destinations:
+                    suggested_destinations[suggested] = []
+                suggested_destinations[suggested].append(os.path.basename(file_path))
+
+        # Jeśli mamy sugestie, zapytaj użytkownika
+        destination = None
+        if suggested_destinations and len(suggested_destinations) == 1:
+            # Jeśli mamy tylko jedną sugestię dla wszystkich plików
+            suggested = list(suggested_destinations.keys())[0]
+            files_list = "\n".join(suggested_destinations[suggested][:5])
+            if len(suggested_destinations[suggested]) > 5:
+                files_list += f"\n... i {len(suggested_destinations[suggested]) - 5} więcej"
+
+            response = messagebox.askyesno(
+                "Sugerowana lokalizacja",
+                f"Na podstawie historii przenoszenia, sugerowana lokalizacja to:\n{suggested}\n\n"
+                f"Pliki do przeniesienia:\n{files_list}\n\n"
+                f"Czy chcesz użyć tej lokalizacji?"
+            )
+            if response:
+                destination = suggested
+
+        # Jeśli nie wybrano sugerowanej lokalizacji, pozwól użytkownikowi wybrać folder
         if not destination:
-            messagebox.showinfo("Informacja", "Nie wybrano folderu docelowego.")
-            return
+            destination = select_destination()
+            if not destination:
+                messagebox.showinfo("Informacja", "Nie wybrano folderu docelowego.")
+                return
 
         files_info_list = move_files(files, destination)
 

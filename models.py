@@ -1,4 +1,4 @@
-# models.py
+# models.py (zaktualizowana klasa FileInfo)
 from datetime import datetime
 
 
@@ -7,7 +7,8 @@ class FileInfo:
 
     def __init__(self, name, extension, source_path, destination_path, status,
                  file_size=0, creation_date="", modification_date="", attributes="",
-                 mime_type="", file_signature="", keywords="", headers_info=""):
+                 mime_type="", file_signature="", keywords="", headers_info="",
+                 category_extension="", category_name=None, suggested_locations=None):
         self.name = name
         self.extension = extension
         self.source_path = source_path
@@ -26,3 +27,8 @@ class FileInfo:
         self.file_signature = file_signature
         self.keywords = keywords
         self.headers_info = headers_info
+
+        # Informacje o kategoryzacji
+        self.category_extension = category_extension  # kategoria na podstawie rozszerzenia
+        self.category_name = category_name or []  # kategorie na podstawie nazwy
+        self.suggested_locations = suggested_locations or []  # sugerowane lokalizacje
