@@ -3,10 +3,51 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from data_export import export_to_csv
-from file_operations import select_files, select_destination, move_files
 
 
-# Pozostałe funkcje bez zmian...
+def format_size(size_in_bytes):
+    """Formatuje rozmiar w bajtach na bardziej czytelną formę"""
+    if size_in_bytes < 1024:
+        return f"{size_in_bytes} B"
+    elif size_in_bytes < 1024 * 1024:
+        return f"{size_in_bytes / 1024:.2f} KB"
+    elif size_in_bytes < 1024 * 1024 * 1024:
+        return f"{size_in_bytes / (1024 * 1024):.2f} MB"
+    else:
+        return f"{size_in_bytes / (1024 * 1024 * 1024):.2f} GB"
+
+
+def create_main_window():
+    """Tworzy i konfiguruje główne okno aplikacji"""
+    root = tk.Tk()
+    root.title("Przenoszenie plików")
+    root.geometry("400x200")
+
+    return root
+
+
+def setup_ui(root, start_moving_process):
+    """Konfiguruje elementy interfejsu użytkownika w głównym oknie"""
+    # Etykieta informacyjna
+    label = tk.Label(root, text="Program do przenoszenia plików", font=("Arial", 14))
+    label.pack(pady=10)
+
+    # Przycisk do wyboru plików
+    select_files_button = tk.Button(
+        root,
+        text="Wybierz pliki do przeniesienia",
+        command=start_moving_process
+    )
+    select_files_button.pack(pady=10)
+
+    # Przycisk zamknięcia
+    close_button = tk.Button(
+        root,
+        text="Zamknij",
+        command=root.destroy
+    )
+    close_button.pack(pady=10)
+
 
 def show_files_table(files_info):
     """Funkcja wyświetlająca tabelę z informacjami o przeniesionych plikach"""

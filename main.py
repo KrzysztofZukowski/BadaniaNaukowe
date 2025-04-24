@@ -9,13 +9,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.append(current_dir)
 
-# Importujemy nasze moduły
+# Importujemy funkcje bezpośrednio
 from file_operations import select_files, select_destination, move_files
 from gui_components import create_main_window, setup_ui, show_files_table
-from models import FileInfo
-# Możemy też zaimportować nowy moduł, nawet jeśli nie używamy go bezpośrednio w main.py
-# jest to dobra praktyka, by upewnić się, że moduł jest dostępny
-import file_analyzer
 
 
 def main():
