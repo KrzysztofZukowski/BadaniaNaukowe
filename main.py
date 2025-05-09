@@ -11,6 +11,8 @@ if current_dir not in sys.path:
 # Importujemy funkcje bezpośrednio
 from file_operations import select_files, select_destination, move_files, category_analyzer
 from gui_components import create_main_window, setup_ui, show_files_table
+from file_group_visualizer import FileGroupVisualizer
+
 
 def main():
     """Główna funkcja programu"""
@@ -81,11 +83,77 @@ def main():
                 f"Wszystkie pliki ({success_count}) zostały pomyślnie przeniesione do: {destination}"
             )
 
-        # Wyświetlenie tabeli z informacjami o plikach
-        show_files_table(files_info_list)
+        # Wyświetlenie tabeli z informacjami o plikach - przekazujemy category_analyzer
+        show_files_table(files_info_list, category_analyzer)
 
-    # Konfiguracja interfejsu użytkownika
-    setup_ui(root, start_moving_process)
+        # Pytanie o wyświetlenie wizualizacji grup
+        if len(files_info_list) > 1:  # Nie ma sensu grupować pojedynczego pliku
+            response = messagebox.askyesno(
+                "Grupowanie plików",
+                "Czy chcesz wyświetlić zaawansowaną wizualizację grup plików?"
+            )
+            if response:
+                show_group_visualizer()
+
+    # Funkcja do wyświetlania wizualizacji grup
+    def show_group_visualizer():
+        if not files_info_list:
+            messagebox.showinfo("Informacja", "Brak plików do grupowania.")
+            return
+
+        # Utworzenie wizualizera grup
+        visualizer = FileGroupVisualizer(root, files_info_list, category_analyzer)
+
+    # Zmodyfikowana funkcja konfiguracji UI z dodatkowym przyciskiem
+    def setup_enhanced_ui(root):
+        # Etykieta informacyjna
+        label = tk.Label(root, text="Program do przenoszenia plików", font=("Arial", 14))
+        label.pack(pady=10)
+
+        # Przycisk do wyboru plików
+        select_files_button = tk.Button(
+            root,
+            text="Wybierz pliki do przeniesienia",
+            command=start_moving_process,
+            width=30
+        )
+        select_files_button.pack(pady=10)
+
+        # Przycisk do wizualizacji grup (aktywny tylko gdy są dane)
+        visualize_button = tk.Button(
+            root,
+            text="Wyświetl wizualizację grup",
+            command=show_group_visualizer,
+            width=30
+        )
+        visualize_button.pack(pady=10)
+
+        # Dodatkowe informacje o aplikacji
+        info_text = """
+Program pomaga przenosić pliki i kategoryzuje je na podstawie:
+- Rozszerzenia pliku
+- Nazwy pliku
+- Rozmiaru pliku
+- Daty utworzenia/modyfikacji
+- Wzorców w nazwie
+- I wielu innych czynników...
+
+Program zapamiętuje historię przenoszenia i proponuje najlepsze lokalizacje.
+        """
+        info_label = tk.Label(root, text=info_text, justify=tk.LEFT, padx=20)
+        info_label.pack(pady=10)
+
+        # Przycisk zamknięcia
+        close_button = tk.Button(
+            root,
+            text="Zamknij",
+            command=root.destroy,
+            width=20
+        )
+        close_button.pack(pady=10)
+
+    # Konfiguracja interfejsu użytkownika z rozszerzoną wersją funkcji
+    setup_enhanced_ui(root)
 
     # Uruchomienie głównej pętli aplikacji
     root.mainloop()

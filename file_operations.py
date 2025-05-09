@@ -109,15 +109,23 @@ def move_files(files, destination):
             keywords = extract_keywords(file_path)
             headers_info = analyze_headers(file_path)
 
-            # Kategoryzacja pliku
+            # Kategoryzacja pliku - użycie ulepszonej wersji
             categorization = category_analyzer.categorize_file(file_path)
             category_extension = categorization['kategoria_rozszerzenia']
             category_name = categorization['kategoria_nazwy']
             suggested_locations = categorization['sugerowane_lokalizacje']
 
+            # Nowe kategorie
+            size_category = categorization['kategoria_wielkości']
+            date_category = categorization['kategoria_daty']
+            subject_categories = categorization['kategoria_przedmiotu']
+            time_pattern_categories = categorization['kategoria_czasowa']
+            all_categories = categorization['wszystkie_kategorie']
 
             print(f"Analizuję plik: {file_name}")
             print(f"  Kategorie z nazwy: {category_name}")
+            print(f"  Kategoria rozmiaru: {size_category}")
+            print(f"  Kategoria daty: {date_category}")
 
             # Sprawdzenie, czy plik już istnieje w folderze docelowym
             if os.path.exists(destination_path):
@@ -130,7 +138,9 @@ def move_files(files, destination):
                         name, extension, file_path, "", "Pominięto",
                         file_size, creation_date, modification_date, attributes,
                         mime_type, file_signature, keywords, headers_info,
-                        category_extension, category_name, suggested_locations
+                        category_extension, category_name, suggested_locations,
+                        size_category, date_category, subject_categories,
+                        time_pattern_categories, all_categories
                     ))
                     continue
 
@@ -142,7 +152,9 @@ def move_files(files, destination):
                 name, extension, file_path, destination_path, "Przeniesiono",
                 file_size, creation_date, modification_date, attributes,
                 mime_type, file_signature, keywords, headers_info,
-                category_extension, category_name, suggested_locations
+                category_extension, category_name, suggested_locations,
+                size_category, date_category, subject_categories,
+                time_pattern_categories, all_categories
             )
 
             # Zapisanie informacji o przeniesieniu w historii
@@ -172,10 +184,20 @@ def move_files(files, destination):
                     category_extension = categorization['kategoria_rozszerzenia']
                     category_name = categorization['kategoria_nazwy']
                     suggested_locations = categorization['sugerowane_lokalizacje']
+                    size_category = categorization['kategoria_wielkości']
+                    date_category = categorization['kategoria_daty']
+                    subject_categories = categorization['kategoria_przedmiotu']
+                    time_pattern_categories = categorization['kategoria_czasowa']
+                    all_categories = categorization['wszystkie_kategorie']
                 except:
                     category_extension = "Nieznana"
                     category_name = []
                     suggested_locations = []
+                    size_category = "Nieznana"
+                    date_category = "Nieznana"
+                    subject_categories = []
+                    time_pattern_categories = []
+                    all_categories = []
 
             except:
                 file_size = 0
@@ -189,6 +211,11 @@ def move_files(files, destination):
                 category_extension = "Nieznana"
                 category_name = []
                 suggested_locations = []
+                size_category = "Nieznana"
+                date_category = "Nieznana"
+                subject_categories = []
+                time_pattern_categories = []
+                all_categories = []
 
             files_info.append(FileInfo(
                 os.path.splitext(os.path.basename(file_path))[0],
@@ -198,7 +225,9 @@ def move_files(files, destination):
                 f"Błąd: {str(e)}",
                 file_size, creation_date, modification_date, attributes,
                 mime_type, file_signature, keywords, headers_info,
-                category_extension, category_name, suggested_locations
+                category_extension, category_name, suggested_locations,
+                size_category, date_category, subject_categories,
+                time_pattern_categories, all_categories
             ))
             print(f"Błąd podczas przenoszenia pliku {file_path}: {e}")
 

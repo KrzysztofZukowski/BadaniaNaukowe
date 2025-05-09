@@ -49,8 +49,7 @@ def setup_ui(root, start_moving_process):
     close_button.pack(pady=10)
 
 
-# gui_components.py - kompletna funkcja show_files_table
-def show_files_table(files_info):
+def show_files_table(files_info, category_analyzer):
     """Funkcja wyświetlająca tabelę z informacjami o przeniesionych plikach"""
     if not files_info:
         messagebox.showinfo("Informacja", "Brak informacji o plikach do wyświetlenia.")
@@ -76,6 +75,14 @@ def show_files_table(files_info):
     # Zakładka 3: Kategoryzacja
     category_frame = ttk.Frame(notebook)
     notebook.add(category_frame, text="Kategoryzacja")
+
+    # Zakładka 4: Nowe kategorie
+    new_categories_frame = ttk.Frame(notebook)
+    notebook.add(new_categories_frame, text="Nowe kategorie")
+
+    # Zakładka 5: Grupowanie plików
+    grouping_frame = ttk.Frame(notebook)
+    notebook.add(grouping_frame, text="Grupowanie plików")
 
     # Utworzenie tabeli z podstawowymi informacjami
     basic_columns = (
@@ -185,6 +192,97 @@ def show_files_table(files_info):
     category_scrollbar_y.pack(side="right", fill="y")
     category_scrollbar_x.pack(side="bottom", fill="x")
     category_tree.pack(fill="both", expand=True)
+
+    # Utworzenie tabeli z nowymi kategoriami
+    new_cat_columns = (
+        "Nazwa", "Rozszerzenie", "Rozmiar", "Kategoria rozmiaru", "Kategoria daty",
+        "Kategorie przedmiotów", "Kategorie czasowe", "Wszystkie kategorie"
+    )
+    new_cat_tree = ttk.Treeview(new_categories_frame, columns=new_cat_columns, show="headings")
+
+    # Definicja nagłówków kolumn dla nowych kategorii
+    for col in new_cat_columns:
+        new_cat_tree.heading(col, text=col)
+        if col in ["Wszystkie kategorie", "Kategorie czasowe", "Kategorie przedmiotów"]:
+            new_cat_tree.column(col, width=300)  # Szersze kolumny dla dłuższych tekstów
+        else:
+            new_cat_tree.column(col, width=150)
+
+    # Dodanie danych do tabeli nowych kategorii
+    for file_info in files_info:
+        # Formatowanie list kategorii
+        subject_cats = ", ".join(file_info.subject_categories) if file_info.subject_categories else "Brak"
+        time_pattern_cats = ", ".join(
+            file_info.time_pattern_categories) if file_info.time_pattern_categories else "Brak"
+        all_cats = ", ".join(file_info.all_categories) if file_info.all_categories else "Brak"
+
+        new_cat_tree.insert("", "end", values=(
+            file_info.name,
+            file_info.extension,
+            format_size(file_info.file_size),
+            file_info.size_category,
+            file_info.date_category,
+            subject_cats,
+            time_pattern_cats,
+            all_cats
+        ))
+
+    # Dodanie paska przewijania dla tabeli nowych kategorii
+    new_cat_scrollbar_y = ttk.Scrollbar(new_categories_frame, orient="vertical", command=new_cat_tree.yview)
+    new_cat_scrollbar_x = ttk.Scrollbar(new_categories_frame, orient="horizontal", command=new_cat_tree.xview)
+    new_cat_tree.configure(yscrollcommand=new_cat_scrollbar_y.set, xscrollcommand=new_cat_scrollbar_x.set)
+    new_cat_scrollbar_y.pack(side="right", fill="y")
+    new_cat_scrollbar_x.pack(side="bottom", fill="x")
+    new_cat_tree.pack(fill="both", expand=True)
+
+    # Wywołanie metody grupowania plików - używamy przekazanego category_analyzer
+    grouped_files = category_analyzer.group_files_by_category(files_info)
+
+    # Utworzenie widoku drzewa do wyświetlenia grup plików
+    group_tree = ttk.Treeview(grouping_frame, show="tree headings")
+    group_tree.heading("#0", text="Kategorie grupowania")
+    group_tree.column("#0", width=300)
+
+    # Dodanie głównych kategorii grupowania
+    extension_node = group_tree.insert("", "end", text="Według rozszerzenia", open=True)
+    name_node = group_tree.insert("", "end", text="Według nazwy", open=True)
+    size_node = group_tree.insert("", "end", text="Według rozmiaru", open=True)
+    age_node = group_tree.insert("", "end", text="Według wieku", open=True)
+    subject_node = group_tree.insert("", "end", text="Według przedmiotu", open=True)
+    time_node = group_tree.insert("", "end", text="Według wzorca czasowego", open=True)
+
+    # Pomocnicza funkcja do dodawania plików do grupy
+    def add_files_to_group(parent_node, category, files):
+        group_node = group_tree.insert(parent_node, "end", text=f"{category} ({len(files)})", open=False)
+        for file in files:
+            file_node = group_tree.insert(group_node, "end", text=f"{file.name}{file.extension}")
+
+    # Wypełnianie drzewa dla każdej kategorii grupowania
+    for category, files in grouped_files['według_rozszerzenia'].items():
+        add_files_to_group(extension_node, category, files)
+
+    for category, files in grouped_files['według_nazwy'].items():
+        add_files_to_group(name_node, category, files)
+
+    for category, files in grouped_files['według_rozmiaru'].items():
+        add_files_to_group(size_node, category, files)
+
+    for category, files in grouped_files['według_wieku'].items():
+        add_files_to_group(age_node, category, files)
+
+    for category, files in grouped_files['według_przedmiotu'].items():
+        add_files_to_group(subject_node, category, files)
+
+    for category, files in grouped_files['według_wzorca_czasowego'].items():
+        add_files_to_group(time_node, category, files)
+
+    # Dodanie paska przewijania dla drzewa grupowania
+    group_scrollbar_y = ttk.Scrollbar(grouping_frame, orient="vertical", command=group_tree.yview)
+    group_scrollbar_x = ttk.Scrollbar(grouping_frame, orient="horizontal", command=group_tree.xview)
+    group_tree.configure(yscrollcommand=group_scrollbar_y.set, xscrollcommand=group_scrollbar_x.set)
+    group_scrollbar_y.pack(side="right", fill="y")
+    group_scrollbar_x.pack(side="bottom", fill="x")
+    group_tree.pack(fill="both", expand=True)
 
     # Przycisk do eksportu danych
     export_button = tk.Button(
