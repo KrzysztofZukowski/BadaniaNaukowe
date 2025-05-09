@@ -104,9 +104,24 @@ class CategoryAnalyzer:
         if os.path.exists(self.history_file):
             try:
                 with open(self.history_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except:
+                    history = json.load(f)
+
+                    # Upewnij się, że wszystkie wymagane klucze istnieją
+                    if 'extensions' not in history:
+                        history['extensions'] = {}
+                    if 'patterns' not in history:
+                        history['patterns'] = {}
+                    if 'destinations' not in history:
+                        history['destinations'] = {}
+                    if 'content_types' not in history:
+                        history['content_types'] = {}
+
+                    return history
+            except Exception as e:
+                print(f"Błąd podczas wczytywania historii: {e}")
                 return {'extensions': {}, 'patterns': {}, 'destinations': {}, 'content_types': {}}
+
+        # Jeśli plik nie istnieje, zwróć pusty słownik z wszystkimi wymaganymi kluczami
         return {'extensions': {}, 'patterns': {}, 'destinations': {}, 'content_types': {}}
 
     def save_history(self):
@@ -132,7 +147,7 @@ class CategoryAnalyzer:
         self.transfer_history['extensions'][extension][destination_dir] += 1
 
         # Zapisujemy informacje o wzorcach w nazwie i kategoriach z nazwy
-        # Przechodzimy przez wszystkie kategorie z nazwy
+        # Przechodzimy przez wszystkie kategorie z nazwy (zarówno predefiniowane jak i dynamiczne)
         for category_name in file_info.category_name:
             if category_name not in self.transfer_history['patterns']:
                 self.transfer_history['patterns'][category_name] = {}
@@ -143,7 +158,11 @@ class CategoryAnalyzer:
             self.transfer_history['patterns'][category_name][destination_dir] += 1
 
         # Zapisujemy informacje o typie zawartości (MIME)
-        if file_info.mime_type and file_info.mime_type != "Nieznany (błąd)":
+        if hasattr(file_info, 'mime_type') and file_info.mime_type and file_info.mime_type != "Nieznany (błąd)":
+            # Sprawdź, czy klucz 'content_types' istnieje w słowniku transfer_history
+            if 'content_types' not in self.transfer_history:
+                self.transfer_history['content_types'] = {}
+
             if file_info.mime_type not in self.transfer_history['content_types']:
                 self.transfer_history['content_types'][file_info.mime_type] = {}
 
@@ -280,20 +299,33 @@ class CategoryAnalyzer:
 
         return results
 
+    # Modyfikacja w pliku category_analyzer.py
+    # Znajdź funkcję _categorize_by_size i zastąp ją poniższą
+
     def _categorize_by_size(self, file_size):
         """Kategoryzuje plik na podstawie rozmiaru"""
-        if file_size < 1024:  # Mniej niż 1 KB
-            return 'bardzo_mały'
-        elif file_size < 100 * 1024:  # Mniej niż 100 KB
-            return 'mały'
-        elif file_size < 1024 * 1024:  # Mniej niż 1 MB
-            return 'średni'
-        elif file_size < 10 * 1024 * 1024:  # Mniej niż 10 MB
-            return 'duży'
-        elif file_size < 100 * 1024 * 1024:  # Mniej niż 100 MB
-            return 'bardzo_duży'
-        else:  # 100 MB i więcej
-            return 'ogromny'
+        try:
+            # Upewnij się, że file_size jest liczbą
+            file_size = int(file_size)
+
+            print(f"Kategoryzowanie pliku według rozmiaru: {file_size} bajtów")
+
+            # Zmieniono progi kategorii, aby lepiej odpowiadały realnym rozmiarom plików
+            if file_size < 10 * 1024:  # Mniej niż 10 KB
+                return 'bardzo_mały'
+            elif file_size < 500 * 1024:  # Mniej niż 500 KB
+                return 'mały'
+            elif file_size < 5 * 1024 * 1024:  # Mniej niż 5 MB
+                return 'średni'
+            elif file_size < 50 * 1024 * 1024:  # Mniej niż 50 MB
+                return 'duży'
+            elif file_size < 500 * 1024 * 1024:  # Mniej niż 500 MB
+                return 'bardzo_duży'
+            else:  # 500 MB i więcej
+                return 'ogromny'
+        except (ValueError, TypeError) as e:
+            print(f"Błąd kategoryzacji rozmiaru: {e}, wartość: {file_size}, typ: {type(file_size)}")
+            return 'nieznany'
 
     def _categorize_by_date(self, name, creation_date, modification_date):
         """Kategoryzuje plik na podstawie daty utworzenia/modyfikacji"""

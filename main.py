@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 import sys
+import traceback
 
 # Upewniamy się, że katalog z naszymi modułami jest w ścieżce Pythona
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -30,6 +31,10 @@ def main():
         if not files:
             messagebox.showinfo("Informacja", "Nie wybrano żadnych plików.")
             return
+
+        print(f"Wybrano {len(files)} plików:")
+        for file in files:
+            print(f"  {file}")
 
         # Sprawdź czy istnieją sugerowane lokalizacje
         suggested_destinations = {}
@@ -65,35 +70,50 @@ def main():
                 messagebox.showinfo("Informacja", "Nie wybrano folderu docelowego.")
                 return
 
-        files_info_list = move_files(files, destination)
+        print(f"Wybrano folder docelowy: {destination}")
 
-        # Liczenie statystyk
-        success_count = len([f for f in files_info_list if f.status == "Przeniesiono"])
-        failed_count = len(files_info_list) - success_count
+        try:
+            # Przenoszenie plików
+            print(f"Rozpoczynam przenoszenie plików...")
+            files_info_list = move_files(files, destination)
+            print(f"Zakończono przenoszenie plików. Otrzymano {len(files_info_list)} informacji o plikach.")
 
-        if failed_count > 0:
-            messagebox.showwarning(
-                "Uwaga",
-                f"Przeniesiono {success_count} z {len(files_info_list)} plików.\n"
-                f"Nie udało się przenieść {failed_count} plików."
+            # Liczenie statystyk
+            success_count = len([f for f in files_info_list if f.status == "Przeniesiono"])
+            failed_count = len(files_info_list) - success_count
+
+            print(f"Sukces: {success_count}, Nieudane: {failed_count}")
+
+            if failed_count > 0:
+                messagebox.showwarning(
+                    "Uwaga",
+                    f"Przeniesiono {success_count} z {len(files_info_list)} plików.\n"
+                    f"Nie udało się przenieść {failed_count} plików."
+                )
+            else:
+                messagebox.showinfo(
+                    "Sukces",
+                    f"Wszystkie pliki ({success_count}) zostały pomyślnie przeniesione do: {destination}"
+                )
+
+            # Wyświetlenie tabeli z informacjami o plikach - przekazujemy category_analyzer
+            show_files_table(files_info_list, category_analyzer)
+
+            # Pytanie o wyświetlenie wizualizacji grup
+            if len(files_info_list) > 1:  # Nie ma sensu grupować pojedynczego pliku
+                response = messagebox.askyesno(
+                    "Grupowanie plików",
+                    "Czy chcesz wyświetlić zaawansowaną wizualizację grup plików?"
+                )
+                if response:
+                    show_group_visualizer()
+        except Exception as e:
+            print(f"KRYTYCZNY BŁĄD w procesie przenoszenia: {e}")
+            traceback.print_exc()
+            messagebox.showerror(
+                "Błąd",
+                f"Wystąpił błąd podczas przenoszenia plików:\n{str(e)}"
             )
-        else:
-            messagebox.showinfo(
-                "Sukces",
-                f"Wszystkie pliki ({success_count}) zostały pomyślnie przeniesione do: {destination}"
-            )
-
-        # Wyświetlenie tabeli z informacjami o plikach - przekazujemy category_analyzer
-        show_files_table(files_info_list, category_analyzer)
-
-        # Pytanie o wyświetlenie wizualizacji grup
-        if len(files_info_list) > 1:  # Nie ma sensu grupować pojedynczego pliku
-            response = messagebox.askyesno(
-                "Grupowanie plików",
-                "Czy chcesz wyświetlić zaawansowaną wizualizację grup plików?"
-            )
-            if response:
-                show_group_visualizer()
 
     # Funkcja do wyświetlania wizualizacji grup
     def show_group_visualizer():
@@ -101,8 +121,18 @@ def main():
             messagebox.showinfo("Informacja", "Brak plików do grupowania.")
             return
 
-        # Utworzenie wizualizera grup
-        visualizer = FileGroupVisualizer(root, files_info_list, category_analyzer)
+        try:
+            # Utworzenie wizualizera grup
+            print("Tworzenie wizualizera grup...")
+            visualizer = FileGroupVisualizer(root, files_info_list, category_analyzer)
+            print("Wizualizer grup utworzony pomyślnie")
+        except Exception as e:
+            print(f"BŁĄD podczas tworzenia wizualizera grup: {e}")
+            traceback.print_exc()
+            messagebox.showerror(
+                "Błąd",
+                f"Wystąpił błąd podczas tworzenia wizualizera grup:\n{str(e)}"
+            )
 
     # Zmodyfikowana funkcja konfiguracji UI z dodatkowym przyciskiem
     def setup_enhanced_ui(root):
@@ -161,9 +191,18 @@ Program zapamiętuje historię przenoszenia i proponuje najlepsze lokalizacje.
 
 if __name__ == "__main__":
     try:
+        print("Uruchamianie programu...")
         main()
     except Exception as e:
-        print(f"Wystąpił błąd: {e}")
-        import traceback
-
+        print(f"Wystąpił krytyczny błąd: {e}")
         traceback.print_exc()
+
+        # Próba wyświetlenia okna dialogowego z błędem
+        try:
+            tk.Tk().withdraw()
+            messagebox.showerror(
+                "Krytyczny błąd",
+                f"Wystąpił krytyczny błąd podczas uruchamiania programu:\n{str(e)}"
+            )
+        except:
+            pass  # Jeśli nawet okno dialogowe nie może być wyświetlone
