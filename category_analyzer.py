@@ -2,6 +2,7 @@
 import os
 import re
 import json
+import traceback
 from datetime import datetime
 from collections import Counter, defaultdict
 
@@ -299,32 +300,46 @@ class CategoryAnalyzer:
 
         return results
 
-    # Modyfikacja w pliku category_analyzer.py
-    # Znajdź funkcję _categorize_by_size i zastąp ją poniższą
-
     def _categorize_by_size(self, file_size):
         """Kategoryzuje plik na podstawie rozmiaru"""
         try:
-            # Upewnij się, że file_size jest liczbą
-            file_size = int(file_size)
+            # Ensure we have a clean integer value
+            if file_size is None:
+                file_size = 0
+            elif isinstance(file_size, str):
+                clean_size = ''.join(c for c in file_size if c.isdigit() or c == '.')
+                file_size = int(float(clean_size)) if clean_size else 0
+            else:
+                file_size = int(file_size) if file_size else 0
 
-            print(f"Kategoryzowanie pliku według rozmiaru: {file_size} bajtów")
+            # Print for verification
+            print(f"CATEGORIZING: Size {file_size} bytes")
 
-            # Zmieniono progi kategorii, aby lepiej odpowiadały realnym rozmiarom plików
-            if file_size < 10 * 1024:  # Mniej niż 10 KB
-                return 'bardzo_mały'
-            elif file_size < 500 * 1024:  # Mniej niż 500 KB
-                return 'mały'
-            elif file_size < 5 * 1024 * 1024:  # Mniej niż 5 MB
-                return 'średni'
-            elif file_size < 50 * 1024 * 1024:  # Mniej niż 50 MB
-                return 'duży'
-            elif file_size < 500 * 1024 * 1024:  # Mniej niż 500 MB
-                return 'bardzo_duży'
-            else:  # 500 MB i więcej
-                return 'ogromny'
-        except (ValueError, TypeError) as e:
-            print(f"Błąd kategoryzacji rozmiaru: {e}, wartość: {file_size}, typ: {type(file_size)}")
+            # Define size constants clearly
+            KB = 1024
+            MB = KB * 1024
+            GB = MB * 1024
+
+            # Use a clear and explicit categorization logic
+            if file_size < 10 * KB:
+                category = 'bardzo_mały'
+            elif file_size < 500 * KB:
+                category = 'mały'
+            elif file_size < 5 * MB:
+                category = 'średni'
+            elif file_size < 50 * MB:
+                category = 'duży'
+            elif file_size < 500 * MB:
+                category = 'bardzo_duży'
+            else:
+                category = 'ogromny'
+
+            print(f"SIZE CATEGORY RESULT: {category} for {file_size} bytes")
+            return category
+
+        except Exception as e:
+            print(f"Error in _categorize_by_size: {e}")
+            traceback.print_exc()
             return 'nieznany'
 
     def _categorize_by_date(self, name, creation_date, modification_date):

@@ -1,13 +1,13 @@
-# file_operations.py (poprawiony początek pliku)
+# file_operations.py
 import os
 import shutil
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import time
 import stat
-import traceback  # Dodany import traceback
+import traceback
 from datetime import datetime
-
+from file_size_reader import FileSizeReader
 from models import FileInfo
 from file_analyzer import get_mime_type, get_file_signature, extract_keywords, analyze_headers
 from category_analyzer import CategoryAnalyzer
@@ -88,11 +88,6 @@ def get_file_attributes(file_path):
         print(f"Błąd podczas pobierania atrybutów pliku: {e}")
         return "Błąd odczytu atrybutów"
 
-
-# file_operations.py - dodaj import na początku pliku
-from file_size_reader import FileSizeReader
-
-
 def move_files(files, destination):
     """Funkcja przenosząca wybrane pliki do wskazanego folderu"""
     if not os.path.exists(destination):
@@ -159,6 +154,8 @@ def move_files(files, destination):
                 creation_date = "Nieznany"
                 modification_date = "Nieznany"
                 attributes = "Błąd odczytu atrybutów"
+
+
 
             # Pobieranie zaawansowanych metadanych
             mime_type = get_mime_type(file_path)
@@ -235,6 +232,7 @@ def move_files(files, destination):
 
             # Ustawienie czasu operacji (timestamp) na aktualny czas
             file_info.timestamp = current_time
+            print(f"DEBUG: Final size category for {file_name}: {file_info.size_category}")
 
             # Sprawdźmy, czy file_size został poprawnie zapisany w obiekcie
             print(f"Zapisany w FileInfo rozmiar: {file_info.file_size} typu {type(file_info.file_size)}")

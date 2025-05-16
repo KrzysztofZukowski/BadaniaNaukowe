@@ -1,7 +1,8 @@
-# file_group_visualizer.py
+# file_group_visualizer.py - corrected version
 import tkinter as tk
 from tkinter import ttk
 import os
+
 from collections import defaultdict, Counter
 
 
@@ -27,10 +28,18 @@ class FileGroupVisualizer:
         self.grouped_files = None
         self.current_groups = {}
 
-        # Utworzenie okna
-        self.window = tk.Toplevel(parent)
-        self.window.title("Wizualizacja grup plików")
-        self.window.geometry("1000x700")
+        # Utworzenie okna - FIX: ensure parent is a Tk object
+        try:
+            self.window = tk.Toplevel(parent)
+            self.window.title("Wizualizacja grup plików")
+            self.window.geometry("1000x700")
+        except AttributeError:
+            # If parent is not a proper Tk parent, create a new root
+            print("Creating new Tk root for visualization")
+            root = tk.Tk()
+            self.window = tk.Toplevel(root)
+            self.window.title("Wizualizacja grup plików")
+            self.window.geometry("1000x700")
 
         # Ramka główna
         self.main_frame = ttk.Frame(self.window)
@@ -133,12 +142,76 @@ class FileGroupVisualizer:
         self.smallest_group_label = ttk.Label(self.stats_frame, text="Najmniejsza grupa: -")
         self.smallest_group_label.grid(row=0, column=3, padx=10, pady=5, sticky="w")
 
-        # Inicjalne grupowanie
-        self.grouped_files = self.category_analyzer.group_files_by_category(files_info)
+        # Inicjalne grupowanie - ZMODYFIKOWANE
+        self.grouped_files = self._create_grouped_files()
         self.update_groups()
+
+    def _create_grouped_files(self):
+        """Tworzy strukturę zgrupowanych plików na podstawie zapamiętanych kategorii"""
+        # Inicjalizacja słowników dla różnych typów grupowania
+        grouped_by_extension_category = defaultdict(list)
+        grouped_by_name_category = defaultdict(list)
+        grouped_by_size = defaultdict(list)
+        grouped_by_age = defaultdict(list)
+        grouped_by_subject = defaultdict(list)
+        grouped_by_time_pattern = defaultdict(list)
+
+        # Wszystkie grupy (do wyświetlenia sumarycznego)
+        all_groups = defaultdict(list)
+
+        for file_info in self.files_info:
+            # Używamy już zapisanych kategorii zamiast ponownego kategoryzowania
+
+            # Grupowanie według kategorii rozszerzenia
+            ext_category = file_info.category_extension
+            grouped_by_extension_category[ext_category].append(file_info)
+            all_groups[f"rozszerzenie_{ext_category}"].append(file_info)
+
+            # Grupowanie według kategorii nazwy
+            for name_cat in file_info.category_name:
+                grouped_by_name_category[name_cat].append(file_info)
+                all_groups[f"nazwa_{name_cat}"].append(file_info)
+
+            # Grupowanie według rozmiaru - KLUCZOWA ZMIANA
+            size_category = file_info.size_category
+            print(f"Grouping by size: {file_info.name}{file_info.extension} → {size_category}")
+            grouped_by_size[size_category].append(file_info)
+            all_groups[f"rozmiar_{size_category}"].append(file_info)
+
+            # Grupowanie według wieku
+            age_category = file_info.date_category
+            grouped_by_age[age_category].append(file_info)
+            all_groups[f"wiek_{age_category}"].append(file_info)
+
+            # Grupowanie według przedmiotu
+            for subject in file_info.subject_categories:
+                grouped_by_subject[subject].append(file_info)
+                all_groups[f"przedmiot_{subject}"].append(file_info)
+
+            # Grupowanie według wzorca czasowego
+            for time_pattern in file_info.time_pattern_categories:
+                grouped_by_time_pattern[time_pattern].append(file_info)
+                all_groups[f"czas_{time_pattern}"].append(file_info)
+
+        # Tworzenie wynikowego słownika
+        result = {
+            'według_rozszerzenia': grouped_by_extension_category,
+            'według_nazwy': grouped_by_name_category,
+            'według_rozmiaru': grouped_by_size,
+            'według_wieku': grouped_by_age,
+            'według_przedmiotu': grouped_by_subject,
+            'według_wzorca_czasowego': grouped_by_time_pattern,
+            'wszystkie_grupy': all_groups
+        }
+
+        return result
 
     def update_groups(self):
         """Aktualizuje listę grup na podstawie wybranej metody"""
+        print("\n=== START: UPDATING GROUPS ===")
+        for idx, fi in enumerate(self.files_info):
+            print(f"File {idx + 1}: {fi.name}{fi.extension}, size: {fi.file_size}, category: {fi.size_category}")
+
         # Czyszczenie listy grup
         self.groups_listbox.delete(0, tk.END)
 
