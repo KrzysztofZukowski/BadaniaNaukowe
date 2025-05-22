@@ -1,14 +1,13 @@
-# gui_components.py
+# gui_components.py - poprawiona wersja z lepszym grupowaniem
 import tkinter as tk
 from tkinter import ttk, messagebox
-
 from data_export import export_to_csv
+import traceback
 
-
-# gui_components.py - dodaj import na początku pliku
+# Importuj funkcję formatowania rozmiaru
 from file_size_reader import FileSizeReader
 
-# Zastąp istniejącą funkcję format_size
+
 def format_size(size_in_bytes):
     """Formatuje rozmiar w bajtach na bardziej czytelną formę używając klasy FileSizeReader"""
     return FileSizeReader.format_size(size_in_bytes)
@@ -19,7 +18,6 @@ def create_main_window():
     root = tk.Tk()
     root.title("Przenoszenie plików")
     root.geometry("400x200")
-
     return root
 
 
@@ -48,8 +46,6 @@ def setup_ui(root, start_moving_process):
 
 def show_files_table(files_info, category_analyzer):
     """Funkcja wyświetlająca tabelę z informacjami o przeniesionych plikach"""
-    import traceback
-
     print("\n=== Wyświetlanie tabeli plików ===")
 
     if not files_info:
@@ -59,30 +55,10 @@ def show_files_table(files_info, category_analyzer):
 
     print(f"Liczba plików do wyświetlenia: {len(files_info)}")
 
-    # Wydrukuj szczegóły wszystkich plików dla diagnostyki
-    for idx, file_info in enumerate(files_info):
-        print(f"\nPlik {idx + 1}: {file_info.name}{file_info.extension}")
-        print(f"  Status: {file_info.status}")
-        print(f"  Czas operacji: {file_info.timestamp}")
-        print(f"  Rozmiar surowy: {file_info.file_size} typu {type(file_info.file_size)}")
-
-        # Próba sformatowania rozmiaru
-        try:
-            formatted_size = format_size(file_info.file_size)
-            print(f"  Rozmiar sformatowany: {formatted_size}")
-        except Exception as e:
-            print(f"  BŁĄD formatowania rozmiaru: {e}")
-            traceback.print_exc()
-
-        print(f"  Data utworzenia: {file_info.creation_date}")
-        print(f"  Data modyfikacji: {file_info.modification_date}")
-        print(f"  Kategoria rozszerzenia: {file_info.category_extension}")
-        print(f"  Kategorie z nazwy: {file_info.category_name}")
-
     # Utworzenie nowego okna dla tabeli
     table_window = tk.Toplevel()
     table_window.title("Informacje o przeniesionych plikach")
-    table_window.geometry("1200x600")  # Zwiększony rozmiar okna dla dodatkowych kolumn
+    table_window.geometry("1200x600")
 
     # Utworzenie notebooka (zakładek)
     notebook = ttk.Notebook(table_window)
@@ -96,17 +72,13 @@ def show_files_table(files_info, category_analyzer):
     advanced_frame = ttk.Frame(notebook)
     notebook.add(advanced_frame, text="Zaawansowane informacje")
 
-    # Zakładka 3: Kategoryzacja
+    # Zakładka 3: Kategorie
     category_frame = ttk.Frame(notebook)
-    notebook.add(category_frame, text="Kategoryzacja")
+    notebook.add(category_frame, text="Kategorie")
 
-    # Zakładka 4: Nowe kategorie
-    new_categories_frame = ttk.Frame(notebook)
-    notebook.add(new_categories_frame, text="Nowe kategorie")
-
-    # Zakładka 5: Grupowanie plików
+    # Zakładka 4: Grupowanie
     grouping_frame = ttk.Frame(notebook)
-    notebook.add(grouping_frame, text="Grupowanie plików")
+    notebook.add(grouping_frame, text="Grupowanie")
 
     # Utworzenie tabeli z podstawowymi informacjami
     basic_columns = (
@@ -118,7 +90,7 @@ def show_files_table(files_info, category_analyzer):
     # Definicja nagłówków kolumn
     for col in basic_columns:
         basic_tree.heading(col, text=col)
-        basic_tree.column(col, width=120)  # Dostosowanie szerokości kolumn
+        basic_tree.column(col, width=120)
 
     # Dodanie danych do tabeli podstawowych informacji
     print("\nDodawanie danych do tabeli podstawowych informacji:")
@@ -131,9 +103,6 @@ def show_files_table(files_info, category_analyzer):
                 print(f"Błąd formatowania rozmiaru dla {file_info.name}: {size_error}")
                 formatted_size = "Błąd"
 
-            print(
-                f"Dodawanie pliku {idx + 1} do tabeli: {file_info.name}{file_info.extension}, rozmiar={formatted_size}")
-
             values = (
                 file_info.name,
                 file_info.extension,
@@ -145,12 +114,7 @@ def show_files_table(files_info, category_analyzer):
                 file_info.attributes
             )
 
-            # Wydrukuj wszystkie wartości do dodania
-            for i, col in enumerate(basic_columns):
-                print(f"  {col}: {values[i]}")
-
             basic_tree.insert("", "end", values=values)
-            print(f"  Dodano pomyślnie")
         except Exception as e:
             print(f"BŁĄD podczas dodawania do tabeli: {e}")
             traceback.print_exc()
@@ -173,16 +137,13 @@ def show_files_table(files_info, category_analyzer):
     for col in advanced_columns:
         advanced_tree.heading(col, text=col)
         if col in ["Słowa kluczowe", "Informacje o nagłówkach"]:
-            advanced_tree.column(col, width=300)  # Szersze kolumny dla dłuższych tekstów
+            advanced_tree.column(col, width=300)
         else:
             advanced_tree.column(col, width=150)
 
     # Dodanie danych do tabeli zaawansowanych informacji
-    print("\nDodawanie danych do tabeli zaawansowanych informacji:")
     for idx, file_info in enumerate(files_info):
         try:
-            print(f"Dodawanie pliku {idx + 1} do tabeli zaawansowanej: {file_info.name}{file_info.extension}")
-
             values = (
                 file_info.name,
                 file_info.extension,
@@ -191,9 +152,7 @@ def show_files_table(files_info, category_analyzer):
                 file_info.keywords,
                 file_info.headers_info
             )
-
             advanced_tree.insert("", "end", values=values)
-            print(f"  Dodano pomyślnie")
         except Exception as e:
             print(f"BŁĄD podczas dodawania do tabeli zaawansowanej: {e}")
             traceback.print_exc()
@@ -206,28 +165,23 @@ def show_files_table(files_info, category_analyzer):
     advanced_scrollbar_x.pack(side="bottom", fill="x")
     advanced_tree.pack(fill="both", expand=True)
 
-    # Utworzenie tabeli z informacjami o kategoryzacji
+    # Utworzenie tabeli z informacjami o kategoriach
     category_columns = (
-        "Nazwa", "Rozszerzenie", "Kategoria pliku", "Kategorie z nazwy", "Sugerowane lokalizacje"
+        "Nazwa", "Rozszerzenie", "Typ pliku", "Kategoria rozmiaru", "Kategoria daty", "Kategorie z nazwy"
     )
     category_tree = ttk.Treeview(category_frame, columns=category_columns, show="headings")
 
-    # Definicja nagłówków kolumn dla kategoryzacji
+    # Definicja nagłówków kolumn dla kategorii
     for col in category_columns:
         category_tree.heading(col, text=col)
-        if col in ["Sugerowane lokalizacje"]:
-            category_tree.column(col, width=400)  # Szersze kolumny dla dłuższych tekstów
-        elif col in ["Kategorie z nazwy"]:
-            category_tree.column(col, width=200)
+        if col in ["Kategorie z nazwy"]:
+            category_tree.column(col, width=300)
         else:
             category_tree.column(col, width=150)
 
-    # Dodanie danych do tabeli kategoryzacji
-    print("\nDodawanie danych do tabeli kategoryzacji:")
+    # Dodanie danych do tabeli kategorii
     for idx, file_info in enumerate(files_info):
         try:
-            print(f"Dodawanie pliku {idx + 1} do tabeli kategoryzacji: {file_info.name}{file_info.extension}")
-
             # Formatowanie listy kategorii z nazwy
             try:
                 name_categories = ", ".join(file_info.category_name) if file_info.category_name else "Brak"
@@ -235,31 +189,21 @@ def show_files_table(files_info, category_analyzer):
                 print(f"Błąd formatowania kategorii z nazwy: {cat_error}")
                 name_categories = "Błąd"
 
-            # Formatowanie sugerowanych lokalizacji
-            try:
-                suggested_locs = []
-                for loc, reason, count in file_info.suggested_locations:
-                    suggested_locs.append(f"{loc} ({reason}, {count} razy)")
-                suggested_locations_str = "\n".join(suggested_locs) if suggested_locs else "Brak sugestii"
-            except Exception as loc_error:
-                print(f"Błąd formatowania sugerowanych lokalizacji: {loc_error}")
-                suggested_locations_str = "Błąd"
-
             values = (
                 file_info.name,
                 file_info.extension,
                 file_info.category_extension,
-                name_categories,
-                suggested_locations_str
+                file_info.size_category,
+                file_info.date_category,
+                name_categories
             )
 
             category_tree.insert("", "end", values=values)
-            print(f"  Dodano pomyślnie")
         except Exception as e:
-            print(f"BŁĄD podczas dodawania do tabeli kategoryzacji: {e}")
+            print(f"BŁĄD podczas dodawania do tabeli kategorii: {e}")
             traceback.print_exc()
 
-    # Dodanie paska przewijania dla tabeli kategoryzacji
+    # Dodanie paska przewijania dla tabeli kategorii
     category_scrollbar_y = ttk.Scrollbar(category_frame, orient="vertical", command=category_tree.yview)
     category_scrollbar_x = ttk.Scrollbar(category_frame, orient="horizontal", command=category_tree.xview)
     category_tree.configure(yscrollcommand=category_scrollbar_y.set, xscrollcommand=category_scrollbar_x.set)
@@ -267,178 +211,83 @@ def show_files_table(files_info, category_analyzer):
     category_scrollbar_x.pack(side="bottom", fill="x")
     category_tree.pack(fill="both", expand=True)
 
-    # Utworzenie tabeli z nowymi kategoriami
-    new_cat_columns = (
-        "Nazwa", "Rozszerzenie", "Rozmiar", "Kategoria rozmiaru", "Kategoria daty",
-        "Kategorie przedmiotów", "Kategorie czasowe", "Wszystkie kategorie"
-    )
-    new_cat_tree = ttk.Treeview(new_categories_frame, columns=new_cat_columns, show="headings")
+    # Zakładka grupowania - uproszczona
+    print("\nTworzenie zakładki grupowania...")
 
-    # Definicja nagłówków kolumn dla nowych kategorii
-    for col in new_cat_columns:
-        new_cat_tree.heading(col, text=col)
-        if col in ["Wszystkie kategorie", "Kategorie czasowe", "Kategorie przedmiotów"]:
-            new_cat_tree.column(col, width=300)  # Szersze kolumny dla dłuższych tekstów
-        else:
-            new_cat_tree.column(col, width=150)
-
-    # Dodanie danych do tabeli nowych kategorii
-    print("\nDodawanie danych do tabeli nowych kategorii:")
-    for idx, file_info in enumerate(files_info):
-        try:
-            print(f"Dodawanie pliku {idx + 1} do tabeli nowych kategorii: {file_info.name}{file_info.extension}")
-
-            # Formatowanie list kategorii
-            try:
-                subject_cats = ", ".join(file_info.subject_categories) if file_info.subject_categories else "Brak"
-                time_pattern_cats = ", ".join(
-                    file_info.time_pattern_categories) if file_info.time_pattern_categories else "Brak"
-                all_cats = ", ".join(file_info.all_categories) if file_info.all_categories else "Brak"
-            except Exception as cats_error:
-                print(f"Błąd formatowania kategorii: {cats_error}")
-                subject_cats = "Błąd"
-                time_pattern_cats = "Błąd"
-                all_cats = "Błąd"
-
-            # Próba sformatowania rozmiaru
-            try:
-                formatted_size = format_size(file_info.file_size)
-            except Exception as size_error:
-                print(f"Błąd formatowania rozmiaru dla {file_info.name}: {size_error}")
-                formatted_size = "Błąd"
-
-            values = (
-                file_info.name,
-                file_info.extension,
-                formatted_size,
-                file_info.size_category,
-                file_info.date_category,
-                subject_cats,
-                time_pattern_cats,
-                all_cats
-            )
-
-            new_cat_tree.insert("", "end", values=values)
-            print(f"  Dodano pomyślnie")
-        except Exception as e:
-            print(f"BŁĄD podczas dodawania do tabeli nowych kategorii: {e}")
-            traceback.print_exc()
-
-    # Dodanie paska przewijania dla tabeli nowych kategorii
-    new_cat_scrollbar_y = ttk.Scrollbar(new_categories_frame, orient="vertical", command=new_cat_tree.yview)
-    new_cat_scrollbar_x = ttk.Scrollbar(new_categories_frame, orient="horizontal", command=new_cat_tree.xview)
-    new_cat_tree.configure(yscrollcommand=new_cat_scrollbar_y.set, xscrollcommand=new_cat_scrollbar_x.set)
-    new_cat_scrollbar_y.pack(side="right", fill="y")
-    new_cat_scrollbar_x.pack(side="bottom", fill="x")
-    new_cat_tree.pack(fill="both", expand=True)
-
-    # Wywołanie metody grupowania plików
-    print("\nGrupowanie plików...")
+    # Tworzenie prostego grupowania
     try:
-        grouped_files = category_analyzer.group_files_by_category(files_info)
-        print(f"Grupowanie zakończone pomyślnie. Liczba grup: {sum(len(g) for g in grouped_files.values())}")
-    except Exception as group_error:
-        print(f"BŁĄD podczas grupowania plików: {group_error}")
-        traceback.print_exc()
-        # Stwórz pustą strukturę w przypadku błędu
-        grouped_files = {
-            'według_rozszerzenia': {},
-            'według_nazwy': {},
-            'według_rozmiaru': {},
-            'według_wieku': {},
-            'według_przedmiotu': {},
-            'według_wzorca_czasowego': {}
-        }
+        simple_groups = create_simple_grouping(files_info)
 
-    # Utworzenie widoku drzewa do wyświetlenia grup plików
-    group_tree = ttk.Treeview(grouping_frame, show="tree headings")
-    group_tree.heading("#0", text="Kategorie grupowania")
-    group_tree.column("#0", width=300)
+        # Utworzenie widoku drzewa do wyświetlenia grup plików
+        group_tree = ttk.Treeview(grouping_frame, show="tree headings")
+        group_tree.heading("#0", text="Grupy plików")
+        group_tree.column("#0", width=400)
 
-    # Dodanie głównych kategorii grupowania
-    try:
+        # Dodanie głównych kategorii grupowania
         extension_node = group_tree.insert("", "end", text="Według rozszerzenia", open=True)
-        name_node = group_tree.insert("", "end", text="Według nazwy", open=True)
+        type_node = group_tree.insert("", "end", text="Według typu pliku", open=True)
         size_node = group_tree.insert("", "end", text="Według rozmiaru", open=True)
-        age_node = group_tree.insert("", "end", text="Według wieku", open=True)
-        subject_node = group_tree.insert("", "end", text="Według przedmiotu", open=True)
-        time_node = group_tree.insert("", "end", text="Według wzorca czasowego", open=True)
+        date_node = group_tree.insert("", "end", text="Według daty", open=True)
 
         # Pomocnicza funkcja do dodawania plików do grupy
         def add_files_to_group(parent_node, category, files):
             try:
-                print(f"Dodawanie grupy: {category} z {len(files)} plikami")
                 group_node = group_tree.insert(parent_node, "end", text=f"{category} ({len(files)})", open=False)
-                for file in files:
-                    try:
-                        file_node = group_tree.insert(group_node, "end", text=f"{file.name}{file.extension}")
-                    except Exception as file_error:
-                        print(f"Błąd dodawania pliku do grupy: {file_error}")
+                for file in files[:10]:  # Pokaż tylko pierwsze 10 plików
+                    group_tree.insert(group_node, "end", text=f"{file.name}{file.extension}")
+                if len(files) > 10:
+                    group_tree.insert(group_node, "end", text=f"... i {len(files) - 10} więcej")
             except Exception as group_error:
                 print(f"Błąd dodawania grupy: {group_error}")
 
         # Wypełnianie drzewa dla każdej kategorii grupowania
-        print("\nWypełnianie drzewa grupowania:")
+        print("Wypełnianie drzewa grupowania:")
 
         # Według rozszerzenia
         try:
-            print("Dodawanie grup według rozszerzenia")
-            for category, files in grouped_files['według_rozszerzenia'].items():
+            for category, files in simple_groups['extension'].items():
                 add_files_to_group(extension_node, category, files)
         except Exception as ext_error:
             print(f"Błąd dodawania grup według rozszerzenia: {ext_error}")
 
-        # Według nazwy
+        # Według typu pliku
         try:
-            print("Dodawanie grup według nazwy")
-            for category, files in grouped_files['według_nazwy'].items():
-                add_files_to_group(name_node, category, files)
-        except Exception as name_error:
-            print(f"Błąd dodawania grup według nazwy: {name_error}")
+            for category, files in simple_groups['type'].items():
+                add_files_to_group(type_node, category, files)
+        except Exception as type_error:
+            print(f"Błąd dodawania grup według typu: {type_error}")
 
         # Według rozmiaru
         try:
-            print("Dodawanie grup według rozmiaru")
-            for category, files in grouped_files['według_rozmiaru'].items():
+            for category, files in simple_groups['size'].items():
                 add_files_to_group(size_node, category, files)
         except Exception as size_error:
             print(f"Błąd dodawania grup według rozmiaru: {size_error}")
 
-        # Według wieku
+        # Według daty
         try:
-            print("Dodawanie grup według wieku")
-            for category, files in grouped_files['według_wieku'].items():
-                add_files_to_group(age_node, category, files)
-        except Exception as age_error:
-            print(f"Błąd dodawania grup według wieku: {age_error}")
-
-        # Według przedmiotu
-        try:
-            print("Dodawanie grup według przedmiotu")
-            for category, files in grouped_files['według_przedmiotu'].items():
-                add_files_to_group(subject_node, category, files)
-        except Exception as subject_error:
-            print(f"Błąd dodawania grup według przedmiotu: {subject_error}")
-
-        # Według wzorca czasowego
-        try:
-            print("Dodawanie grup według wzorca czasowego")
-            for category, files in grouped_files['według_wzorca_czasowego'].items():
-                add_files_to_group(time_node, category, files)
-        except Exception as time_error:
-            print(f"Błąd dodawania grup według wzorca czasowego: {time_error}")
+            for category, files in simple_groups['date'].items():
+                add_files_to_group(date_node, category, files)
+        except Exception as date_error:
+            print(f"Błąd dodawania grup według daty: {date_error}")
 
     except Exception as e:
         print(f"BŁĄD podczas tworzenia drzewa grup: {e}")
         traceback.print_exc()
+        # Dodaj prostą etykietę w przypadku błędu
+        error_label = ttk.Label(grouping_frame, text="Nie udało się wygenerować grup")
+        error_label.pack()
 
     # Dodanie paska przewijania dla drzewa grupowania
-    group_scrollbar_y = ttk.Scrollbar(grouping_frame, orient="vertical", command=group_tree.yview)
-    group_scrollbar_x = ttk.Scrollbar(grouping_frame, orient="horizontal", command=group_tree.xview)
-    group_tree.configure(yscrollcommand=group_scrollbar_y.set, xscrollcommand=group_scrollbar_x.set)
-    group_scrollbar_y.pack(side="right", fill="y")
-    group_scrollbar_x.pack(side="bottom", fill="x")
-    group_tree.pack(fill="both", expand=True)
+    try:
+        group_scrollbar_y = ttk.Scrollbar(grouping_frame, orient="vertical", command=group_tree.yview)
+        group_scrollbar_x = ttk.Scrollbar(grouping_frame, orient="horizontal", command=group_tree.xview)
+        group_tree.configure(yscrollcommand=group_scrollbar_y.set, xscrollcommand=group_scrollbar_x.set)
+        group_scrollbar_y.pack(side="right", fill="y")
+        group_scrollbar_x.pack(side="bottom", fill="x")
+        group_tree.pack(fill="both", expand=True)
+    except:
+        print("Błąd podczas dodawania pasków przewijania")
 
     # Przycisk do eksportu danych
     export_button = tk.Button(
@@ -449,3 +298,31 @@ def show_files_table(files_info, category_analyzer):
     export_button.pack(pady=10)
 
     print("Zakończono tworzenie interfejsu tabeli plików")
+
+
+def create_simple_grouping(files_info):
+    """Tworzy proste grupowanie plików"""
+    from collections import defaultdict
+
+    groups = {
+        'extension': defaultdict(list),
+        'type': defaultdict(list),
+        'size': defaultdict(list),
+        'date': defaultdict(list)
+    }
+
+    for file_info in files_info:
+        # Według rozszerzenia
+        ext = file_info.extension.lower() if file_info.extension else "(brak)"
+        groups['extension'][ext].append(file_info)
+
+        # Według typu pliku
+        groups['type'][file_info.category_extension].append(file_info)
+
+        # Według rozmiaru
+        groups['size'][file_info.size_category].append(file_info)
+
+        # Według daty
+        groups['date'][file_info.date_category].append(file_info)
+
+    return groups

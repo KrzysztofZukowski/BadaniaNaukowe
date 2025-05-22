@@ -208,31 +208,14 @@ class FileGroupVisualizer:
     def _group_by_name_words(self):
         """Grupuje pliki według słów występujących w nazwach"""
         result = defaultdict(list)
-
-        # Zdefiniuj prawdziwe wzorce nazw
-        name_patterns = [
-            'faktura', 'cv_resume', 'raport', 'backup', 'notatka', 'projekt',
-            'dokumentacja', 'konfiguracja', 'prezentacja', 'umowa', 'oferta',
-            'ankieta', 'zdjęcia', 'muzyka', 'wideo', 'szkic', 'książka', 'list',
-            'prywatne', 'praca', 'szkoła', 'wydarzenie'
-        ]
-
         for file_info in self.files_info:
-            file_added_to_group = False
-
             if file_info.category_name:
                 for category in file_info.category_name:
-                    # Tylko prawdziwe wzorce nazw, nie sztuczne grupy
-                    if (len(category) > 2 and
-                            not category.startswith("słowo_") and
-                            category in name_patterns):
+                    # Filtruj tylko sensowne słowa (dłuższe niż 2 znaki)
+                    if len(category) > 2 and not category.startswith("słowo_"):
                         result[category].append(file_info)
-                        file_added_to_group = True
-                        break
-
-            if not file_added_to_group:
-                result["Inne"].append(file_info)
-
+            else:
+                result["Bez kategorii nazwy"].append(file_info)
         return result
 
     def _group_by_size(self):

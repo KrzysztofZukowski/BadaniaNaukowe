@@ -1,4 +1,4 @@
-# file_operations.py
+# file_operations.py - naprawiona wersja
 import os
 import shutil
 import tkinter as tk
@@ -10,9 +10,16 @@ from datetime import datetime
 from file_size_reader import FileSizeReader
 from models import FileInfo
 from file_analyzer import get_mime_type, get_file_signature, extract_keywords, analyze_headers
-from category_analyzer import CategoryAnalyzer
 
-category_analyzer = CategoryAnalyzer()
+# Próbujemy zaimportować rozszerzony analizator, jeśli nie ma - używamy podstawowego
+try:
+    from enhanced_category_analyzer import EnhancedCategoryAnalyzer
+    category_analyzer = EnhancedCategoryAnalyzer()
+    print("✅ Używam rozszerzonego analizatora kategorii z inteligentnym grupowaniem")
+except ImportError:
+    print("⚠️ Nie mogę zaimportować rozszerzonego analizatora, używam podstawowego")
+    from category_analyzer import CategoryAnalyzer
+    category_analyzer = CategoryAnalyzer()
 
 
 def select_files():
@@ -88,6 +95,7 @@ def get_file_attributes(file_path):
         print(f"Błąd podczas pobierania atrybutów pliku: {e}")
         return "Błąd odczytu atrybutów"
 
+
 def move_files(files, destination):
     """Funkcja przenosząca wybrane pliki do wskazanego folderu"""
     if not os.path.exists(destination):
@@ -141,7 +149,7 @@ def move_files(files, destination):
                 print(f"Atrybuty: {attributes}")
             except Exception as stats_error:
                 print(f"BŁĄD podczas odczytu statystyk pliku: {stats_error}")
-                traceback.print_exc()  # Wypisz pełny traceback
+                traceback.print_exc()
 
                 # Ponowna próba uzyskania rozmiaru
                 try:
@@ -155,8 +163,6 @@ def move_files(files, destination):
                 modification_date = "Nieznany"
                 attributes = "Błąd odczytu atrybutów"
 
-
-
             # Pobieranie zaawansowanych metadanych
             mime_type = get_mime_type(file_path)
             file_signature = get_file_signature(file_path)
@@ -166,8 +172,11 @@ def move_files(files, destination):
             print(f"MIME: {mime_type}")
             print(f"Sygnatura: {file_signature}")
 
-            # Kategoryzacja pliku - użycie ulepszonej wersji
+            # Kategoryzacja pliku
+            print(f"Uruchamiam kategoryzację...")
             categorization = category_analyzer.categorize_file(file_path)
+
+            # Podstawowe kategorie
             category_extension = categorization['kategoria_rozszerzenia']
             category_name = categorization['kategoria_nazwy']
             suggested_locations = categorization['sugerowane_lokalizacje']
@@ -183,6 +192,9 @@ def move_files(files, destination):
             print(f"Kategorie z nazwy: {category_name}")
             print(f"Kategoria rozmiaru: {size_category}")
             print(f"Kategoria daty: {date_category}")
+            print(f"Kategorie przedmiotów: {subject_categories}")
+            print(f"Kategorie czasowe: {time_pattern_categories}")
+            print(f"Wszystkie kategorie: {len(all_categories)} elementów")
 
             # Sprawdzenie, czy plik już istnieje w folderze docelowym
             if os.path.exists(destination_path):
@@ -212,7 +224,7 @@ def move_files(files, destination):
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print(f"Czas operacji: {current_time}")
 
-            # Tworzenie obiektu FileInfo - najpierw wydrukujmy wszystkie argumenty
+            # Tworzenie obiektu FileInfo
             print("\n=== Dane przekazywane do FileInfo ===")
             print(f"name: {name}, extension: {extension}")
             print(f"source_path: {file_path}, destination_path: {destination_path}")
@@ -280,7 +292,7 @@ def move_files(files, destination):
                 keywords = "Nie udało się przeanalizować"
                 headers_info = "Nie udało się przeanalizować"
 
-                # Próbujemy uzyskać informacje o kategoryzacji
+                # Próbujemy uzyskać informacje o kategoryzacji nawet w przypadku błędu
                 try:
                     categorization = category_analyzer.categorize_file(file_path)
                     category_extension = categorization['kategoria_rozszerzenia']
@@ -354,5 +366,16 @@ def move_files(files, destination):
     for idx, fi in enumerate(files_info):
         formatted_size = FileSizeReader.format_size(fi.file_size)
         print(f"{idx + 1}. {fi.name}{fi.extension}: rozmiar={fi.file_size} ({formatted_size}), status={fi.status}")
+
+    # Dodatkowe: Pokaż podgląd inteligentnego grupowania (jeśli dostępne)
+    if len(files_info) > 1 and hasattr(category_analyzer, 'smart_group_files_by_name'):
+        print(f"\n🧠 === PODGLĄD INTELIGENTNEGO GRUPOWANIA ===")
+        try:
+            smart_groups = category_analyzer.smart_group_files_by_name(files_info)
+            print(f"Znaleziono {len(smart_groups)} inteligentnych grup:")
+            for group_name, group_files in smart_groups.items():
+                print(f"  📁 {group_name}: {len(group_files)} plików")
+        except Exception as group_error:
+            print(f"Nie udało się wygenerować podglądu grupowania: {group_error}")
 
     return files_info
