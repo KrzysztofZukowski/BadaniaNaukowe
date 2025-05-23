@@ -1,328 +1,390 @@
-# gui_components.py - poprawiona wersja z lepszym grupowaniem
+# gui_components.py - Uproszczone komponenty GUI
 import tkinter as tk
 from tkinter import ttk, messagebox
+from typing import List, Callable
+from models import FileInfo
 from data_export import export_to_csv
-import traceback
-
-# Importuj funkcję formatowania rozmiaru
-from file_size_reader import FileSizeReader
+from file_group_visualizer import show_file_groups
 
 
-def format_size(size_in_bytes):
-    """Formatuje rozmiar w bajtach na bardziej czytelną formę używając klasy FileSizeReader"""
-    return FileSizeReader.format_size(size_in_bytes)
+class MainWindow:
+    """Główne okno aplikacji"""
+
+    def __init__(self, on_start_process: Callable):
+        self.on_start_process = on_start_process
+        self.root = self.create_window()
+        self.setup_ui()
+
+    def create_window(self) -> tk.Tk:
+        """Tworzy główne okno"""
+        root = tk.Tk()
+        root.title("Organizator Plików")
+        root.geometry("400x300")
+        root.resizable(True, True)
+
+        # Wyśrodkuj okno
+        root.eval('tk::PlaceWindow . center')
+
+        return root
+
+    def setup_ui(self):
+        """Konfiguruje interfejs użytkownika"""
+        # Główna ramka
+        main_frame = ttk.Frame(self.root, padding="20")
+        main_frame.pack(fill="both", expand=True)
+
+        # Tytuł
+        title_label = ttk.Label(
+            main_frame,
+            text="Organizator Plików",
+            font=("Arial", 16, "bold")
+        )
+        title_label.pack(pady=(0, 20))
+
+        # Opis
+        desc_label = ttk.Label(
+            main_frame,
+            text="Program do organizacji i kategoryzacji plików\nz automatycznym wykrywaniem wzorców",
+            justify="center",
+            font=("Arial", 9)
+        )
+        desc_label.pack(pady=(0, 30))
+
+        # Przycisk główny
+        start_button = ttk.Button(
+            main_frame,
+            text="Rozpocznij Organizację Plików",
+            command=self.on_start_process,
+            style="Accent.TButton"
+        )
+        start_button.pack(fill="x", pady=(0, 10))
+
+        # Ramka dodatkowych opcji
+        options_frame = ttk.LabelFrame(main_frame, text="Opcje", padding="10")
+        options_frame.pack(fill="x", pady=(10, 0))
+
+        # Info o historii
+        history_info = ttk.Label(
+            options_frame,
+            text="💡 Program zapamiętuje Twoje preferencje\ni automatycznie sugeruje najlepsze lokalizacje",
+            justify="center",
+            font=("Arial", 8),
+            foreground="gray"
+        )
+        history_info.pack()
+
+        # Przycisk zamknięcia
+        close_button = ttk.Button(
+            main_frame,
+            text="Zamknij",
+            command=self.root.destroy
+        )
+        close_button.pack(side="bottom", pady=(20, 0))
+
+        # Konfiguracja stylów
+        self._setup_styles()
+
+    def _setup_styles(self):
+        """Konfiguruje style TTK"""
+        try:
+            style = ttk.Style()
+            style.theme_use('clam')
+            style.configure('Accent.TButton', font=('Arial', 10, 'bold'))
+        except:
+            pass
+
+    def run(self):
+        """Uruchamia główną pętlę aplikacji"""
+        self.root.mainloop()
 
 
+class ResultsWindow:
+    """Okno z wynikami operacji"""
+
+    def __init__(self, parent, files_info: List[FileInfo]):
+        self.parent = parent
+        self.files_info = files_info
+        self.setup_window()
+        self.setup_ui()
+        self.populate_data()
+
+    def setup_window(self):
+        """Konfiguruje okno wyników"""
+        self.window = tk.Toplevel(self.parent)
+        self.window.title("Wyniki Operacji")
+        self.window.geometry("900x600")
+        self.window.transient(self.parent)
+        self.window.grab_set()
+
+    def setup_ui(self):
+        """Konfiguruje interfejs okna wyników"""
+        # Główna ramka
+        main_frame = ttk.Frame(self.window)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Nagłówek
+        header_frame = ttk.Frame(main_frame)
+        header_frame.pack(fill="x", pady=(0, 10))
+
+        title_label = ttk.Label(
+            header_frame,
+            text="Wyniki Organizacji Plików",
+            font=("Arial", 14, "bold")
+        )
+        title_label.pack(side="left")
+
+        # Statystyki
+        self.stats_label = ttk.Label(header_frame, text="", font=("Arial", 9))
+        self.stats_label.pack(side="right")
+
+        # Notebook z zakładkami
+        notebook = ttk.Notebook(main_frame)
+        notebook.pack(fill="both", expand=True)
+
+        # Zakładka: Lista plików
+        self.create_files_tab(notebook)
+
+        # Zakładka: Grupy
+        self.create_groups_tab(notebook)
+
+        # Przyciski akcji
+        self.create_action_buttons(main_frame)
+
+    def create_files_tab(self, notebook):
+        """Tworzy zakładkę z listą plików"""
+        files_frame = ttk.Frame(notebook)
+        notebook.add(files_frame, text="Lista Plików")
+
+        # Tabela plików
+        columns = ("Nazwa", "Rozszerzenie", "Kategoria", "Rozmiar", "Status")
+        self.files_tree = ttk.Treeview(files_frame, columns=columns, show="headings")
+
+        # Konfiguracja kolumn
+        widths = {"Nazwa": 200, "Rozszerzenie": 80, "Kategoria": 100, "Rozmiar": 80, "Status": 100}
+        for col in columns:
+            self.files_tree.heading(col, text=col)
+            self.files_tree.column(col, width=widths.get(col, 100))
+
+        # Scrollbary
+        v_scroll = ttk.Scrollbar(files_frame, orient="vertical", command=self.files_tree.yview)
+        h_scroll = ttk.Scrollbar(files_frame, orient="horizontal", command=self.files_tree.xview)
+        self.files_tree.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
+
+        # Pakowanie
+        v_scroll.pack(side="right", fill="y")
+        h_scroll.pack(side="bottom", fill="x")
+        self.files_tree.pack(fill="both", expand=True, padx=5, pady=5)
+
+    def create_groups_tab(self, notebook):
+        """Tworzy zakładkę z grupami"""
+        groups_frame = ttk.Frame(notebook)
+        notebook.add(groups_frame, text="Podgląd Grup")
+
+        # Informacja o grupach
+        info_label = ttk.Label(
+            groups_frame,
+            text="Kliknij 'Pokaż Grupy' aby otworzyć zaawansowany wizualizer",
+            font=("Arial", 10),
+            foreground="blue"
+        )
+        info_label.pack(pady=20)
+
+        # Przycisk do wizualizera
+        show_groups_btn = ttk.Button(
+            groups_frame,
+            text="Otwórz Wizualizer Grup",
+            command=self.show_groups_window
+        )
+        show_groups_btn.pack()
+
+        # Szybki podgląd statystyk
+        stats_text = tk.Text(groups_frame, height=15, wrap=tk.WORD)
+        stats_text.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Wypełnij podstawowymi statystykami
+        self.populate_stats_preview(stats_text)
+
+    def create_action_buttons(self, parent):
+        """Tworzy przyciski akcji"""
+        buttons_frame = ttk.Frame(parent)
+        buttons_frame.pack(fill="x", pady=(10, 0))
+
+        # Eksport do CSV
+        export_btn = ttk.Button(
+            buttons_frame,
+            text="Eksportuj do CSV",
+            command=self.export_results
+        )
+        export_btn.pack(side="left", padx=(0, 10))
+
+        # Pokaż grupy
+        groups_btn = ttk.Button(
+            buttons_frame,
+            text="Pokaż Grupy",
+            command=self.show_groups_window
+        )
+        groups_btn.pack(side="left", padx=(0, 10))
+
+        # Zamknij
+        close_btn = ttk.Button(
+            buttons_frame,
+            text="Zamknij",
+            command=self.window.destroy
+        )
+        close_btn.pack(side="right")
+
+    def populate_data(self):
+        """Wypełnia dane w tabeli"""
+        # Wyczyść tabelę
+        for item in self.files_tree.get_children():
+            self.files_tree.delete(item)
+
+        # Dodaj pliki
+        for file_info in self.files_info:
+            # Formatuj status
+            status = file_info.status
+            if status == "success":
+                status = "✅ Pomyślnie"
+            elif status == "skipped":
+                status = "⏩ Pominięty"
+            elif status.startswith("error"):
+                status = f"❌ {status}"
+
+            self.files_tree.insert("", "end", values=(
+                file_info.name,
+                file_info.extension,
+                file_info.category,
+                file_info.display_size,
+                status
+            ))
+
+        # Aktualizuj statystyki
+        self.update_stats()
+
+    def update_stats(self):
+        """Aktualizuje statystyki w nagłówku"""
+        total = len(self.files_info)
+        success = len([f for f in self.files_info if f.status == "success"])
+        errors = len([f for f in self.files_info if f.status.startswith("error")])
+        skipped = len([f for f in self.files_info if f.status == "skipped"])
+
+        stats_text = f"Razem: {total} | Pomyślne: {success} | Błędy: {errors} | Pominięte: {skipped}"
+        self.stats_label.config(text=stats_text)
+
+    def populate_stats_preview(self, text_widget):
+        """Wypełnia podgląd statystyk"""
+        from collections import Counter
+
+        # Statystyki kategorii
+        categories = Counter(f.category for f in self.files_info)
+        extensions = Counter(f.extension for f in self.files_info)
+        statuses = Counter(f.status for f in self.files_info)
+
+        stats_content = "📊 STATYSTYKI PLIKÓW\n\n"
+
+        stats_content += "KATEGORIE:\n"
+        for category, count in categories.most_common():
+            stats_content += f"  {category}: {count} plików\n"
+
+        stats_content += "\nROZSZERZENIA:\n"
+        for ext, count in extensions.most_common(10):  # Top 10
+            display_ext = ext if ext else "(brak)"
+            stats_content += f"  {display_ext}: {count} plików\n"
+
+        stats_content += "\nSTATUSY:\n"
+        for status, count in statuses.items():
+            stats_content += f"  {status}: {count} plików\n"
+
+        # Całkowity rozmiar
+        total_size = sum(f.size for f in self.files_info)
+        if total_size > 1024 ** 3:
+            size_str = f"{total_size / (1024 ** 3):.1f} GB"
+        elif total_size > 1024 ** 2:
+            size_str = f"{total_size / (1024 ** 2):.1f} MB"
+        else:
+            size_str = f"{total_size / 1024:.1f} KB"
+
+        stats_content += f"\nŁĄCZNY ROZMIAR: {size_str}\n"
+
+        text_widget.insert('1.0', stats_content)
+        text_widget.config(state='disabled')
+
+    def show_groups_window(self):
+        """Otwiera okno wizualizera grup"""
+        show_file_groups(self.window, self.files_info)
+
+    def export_results(self):
+        """Eksportuje wyniki do CSV"""
+        export_to_csv(self.files_info)
+
+
+class ProgressDialog:
+    """Proste okno dialogowe postępu"""
+
+    def __init__(self, parent, title="Postęp"):
+        self.parent = parent
+        self.setup_window(title)
+
+    def center_window(self, width=350, height=200):
+        self.dialog.update_idletasks()
+        screen_width = self.dialog.winfo_screenwidth()
+        screen_height = self.dialog.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        self.dialog.geometry(f"{width}x{height}+{x}+{y}")
+
+    def setup_window(self, title):
+        """Konfiguruje okno postępu"""
+        self.window = tk.Toplevel(self.parent)
+        self.window.title(title)
+        self.window.geometry("300x120")
+        self.window.resizable(False, False)
+        self.window.transient(self.parent)
+        self.window.grab_set()
+
+        # Wyśrodkuj okno
+        self.center_window(350, 200)
+
+        # Ramka
+        frame = ttk.Frame(self.window, padding="20")
+        frame.pack(fill="both", expand=True)
+
+        # Etykieta statusu
+        self.status_label = ttk.Label(frame, text="Przetwarzanie...")
+        self.status_label.pack(pady=(0, 10))
+
+        # Pasek postępu
+        self.progress = ttk.Progressbar(frame, mode='indeterminate')
+        self.progress.pack(fill="x")
+        self.progress.start()
+
+    def update_status(self, status: str):
+        """Aktualizuje status"""
+        self.status_label.config(text=status)
+        self.window.update()
+
+    def close(self):
+        """Zamyka okno dialogowe"""
+        try:
+            self.progress.stop()
+            self.window.destroy()
+        except:
+            pass
+
+
+# Funkcje pomocnicze dla kompatybilności
 def create_main_window():
-    """Tworzy i konfiguruje główne okno aplikacji"""
+    """Tworzy główne okno - funkcja pomocnicza"""
     root = tk.Tk()
-    root.title("Przenoszenie plików")
-    root.geometry("400x200")
+    root.title("Organizator Plików")
+    root.geometry("400x300")
     return root
 
 
-def setup_ui(root, start_moving_process):
-    """Konfiguruje elementy interfejsu użytkownika w głównym oknie"""
-    # Etykieta informacyjna
-    label = tk.Label(root, text="Program do przenoszenia plików", font=("Arial", 14))
-    label.pack(pady=10)
+def show_files_table(files_info: List[FileInfo], parent=None):
+    """Wyświetla tabelę z wynikami - funkcja pomocnicza"""
+    if parent is None:
+        parent = tk.Tk()
+        parent.withdraw()
 
-    # Przycisk do wyboru plików
-    select_files_button = tk.Button(
-        root,
-        text="Wybierz pliki do przeniesienia",
-        command=start_moving_process
-    )
-    select_files_button.pack(pady=10)
-
-    # Przycisk zamknięcia
-    close_button = tk.Button(
-        root,
-        text="Zamknij",
-        command=root.destroy
-    )
-    close_button.pack(pady=10)
-
-
-def show_files_table(files_info, category_analyzer):
-    """Funkcja wyświetlająca tabelę z informacjami o przeniesionych plikach"""
-    print("\n=== Wyświetlanie tabeli plików ===")
-
-    if not files_info:
-        print("Brak informacji o plikach do wyświetlenia.")
-        messagebox.showinfo("Informacja", "Brak informacji o plikach do wyświetlenia.")
-        return
-
-    print(f"Liczba plików do wyświetlenia: {len(files_info)}")
-
-    # Utworzenie nowego okna dla tabeli
-    table_window = tk.Toplevel()
-    table_window.title("Informacje o przeniesionych plikach")
-    table_window.geometry("1200x600")
-
-    # Utworzenie notebooka (zakładek)
-    notebook = ttk.Notebook(table_window)
-    notebook.pack(fill="both", expand=True, padx=10, pady=10)
-
-    # Zakładka 1: Podstawowe informacje
-    basic_frame = ttk.Frame(notebook)
-    notebook.add(basic_frame, text="Podstawowe informacje")
-
-    # Zakładka 2: Zaawansowane informacje
-    advanced_frame = ttk.Frame(notebook)
-    notebook.add(advanced_frame, text="Zaawansowane informacje")
-
-    # Zakładka 3: Kategorie
-    category_frame = ttk.Frame(notebook)
-    notebook.add(category_frame, text="Kategorie")
-
-    # Zakładka 4: Grupowanie
-    grouping_frame = ttk.Frame(notebook)
-    notebook.add(grouping_frame, text="Grupowanie")
-
-    # Utworzenie tabeli z podstawowymi informacjami
-    basic_columns = (
-        "Nazwa", "Rozszerzenie", "Status", "Czas operacji",
-        "Rozmiar", "Data utworzenia", "Data modyfikacji", "Atrybuty"
-    )
-    basic_tree = ttk.Treeview(basic_frame, columns=basic_columns, show="headings")
-
-    # Definicja nagłówków kolumn
-    for col in basic_columns:
-        basic_tree.heading(col, text=col)
-        basic_tree.column(col, width=120)
-
-    # Dodanie danych do tabeli podstawowych informacji
-    print("\nDodawanie danych do tabeli podstawowych informacji:")
-    for idx, file_info in enumerate(files_info):
-        try:
-            # Próba sformatowania rozmiaru
-            try:
-                formatted_size = format_size(file_info.file_size)
-            except Exception as size_error:
-                print(f"Błąd formatowania rozmiaru dla {file_info.name}: {size_error}")
-                formatted_size = "Błąd"
-
-            values = (
-                file_info.name,
-                file_info.extension,
-                file_info.status,
-                file_info.timestamp,
-                formatted_size,
-                file_info.creation_date,
-                file_info.modification_date,
-                file_info.attributes
-            )
-
-            basic_tree.insert("", "end", values=values)
-        except Exception as e:
-            print(f"BŁĄD podczas dodawania do tabeli: {e}")
-            traceback.print_exc()
-
-    # Dodanie paska przewijania dla podstawowej tabeli
-    basic_scrollbar_y = ttk.Scrollbar(basic_frame, orient="vertical", command=basic_tree.yview)
-    basic_scrollbar_x = ttk.Scrollbar(basic_frame, orient="horizontal", command=basic_tree.xview)
-    basic_tree.configure(yscrollcommand=basic_scrollbar_y.set, xscrollcommand=basic_scrollbar_x.set)
-    basic_scrollbar_y.pack(side="right", fill="y")
-    basic_scrollbar_x.pack(side="bottom", fill="x")
-    basic_tree.pack(fill="both", expand=True)
-
-    # Utworzenie tabeli z zaawansowanymi informacjami
-    advanced_columns = (
-        "Nazwa", "Rozszerzenie", "Typ MIME", "Sygnatura pliku", "Słowa kluczowe", "Informacje o nagłówkach"
-    )
-    advanced_tree = ttk.Treeview(advanced_frame, columns=advanced_columns, show="headings")
-
-    # Definicja nagłówków kolumn dla zaawansowanych informacji
-    for col in advanced_columns:
-        advanced_tree.heading(col, text=col)
-        if col in ["Słowa kluczowe", "Informacje o nagłówkach"]:
-            advanced_tree.column(col, width=300)
-        else:
-            advanced_tree.column(col, width=150)
-
-    # Dodanie danych do tabeli zaawansowanych informacji
-    for idx, file_info in enumerate(files_info):
-        try:
-            values = (
-                file_info.name,
-                file_info.extension,
-                file_info.mime_type,
-                file_info.file_signature,
-                file_info.keywords,
-                file_info.headers_info
-            )
-            advanced_tree.insert("", "end", values=values)
-        except Exception as e:
-            print(f"BŁĄD podczas dodawania do tabeli zaawansowanej: {e}")
-            traceback.print_exc()
-
-    # Dodanie paska przewijania dla zaawansowanej tabeli
-    advanced_scrollbar_y = ttk.Scrollbar(advanced_frame, orient="vertical", command=advanced_tree.yview)
-    advanced_scrollbar_x = ttk.Scrollbar(advanced_frame, orient="horizontal", command=advanced_tree.xview)
-    advanced_tree.configure(yscrollcommand=advanced_scrollbar_y.set, xscrollcommand=advanced_scrollbar_x.set)
-    advanced_scrollbar_y.pack(side="right", fill="y")
-    advanced_scrollbar_x.pack(side="bottom", fill="x")
-    advanced_tree.pack(fill="both", expand=True)
-
-    # Utworzenie tabeli z informacjami o kategoriach
-    category_columns = (
-        "Nazwa", "Rozszerzenie", "Typ pliku", "Kategoria rozmiaru", "Kategoria daty", "Kategorie z nazwy"
-    )
-    category_tree = ttk.Treeview(category_frame, columns=category_columns, show="headings")
-
-    # Definicja nagłówków kolumn dla kategorii
-    for col in category_columns:
-        category_tree.heading(col, text=col)
-        if col in ["Kategorie z nazwy"]:
-            category_tree.column(col, width=300)
-        else:
-            category_tree.column(col, width=150)
-
-    # Dodanie danych do tabeli kategorii
-    for idx, file_info in enumerate(files_info):
-        try:
-            # Formatowanie listy kategorii z nazwy
-            try:
-                name_categories = ", ".join(file_info.category_name) if file_info.category_name else "Brak"
-            except Exception as cat_error:
-                print(f"Błąd formatowania kategorii z nazwy: {cat_error}")
-                name_categories = "Błąd"
-
-            values = (
-                file_info.name,
-                file_info.extension,
-                file_info.category_extension,
-                file_info.size_category,
-                file_info.date_category,
-                name_categories
-            )
-
-            category_tree.insert("", "end", values=values)
-        except Exception as e:
-            print(f"BŁĄD podczas dodawania do tabeli kategorii: {e}")
-            traceback.print_exc()
-
-    # Dodanie paska przewijania dla tabeli kategorii
-    category_scrollbar_y = ttk.Scrollbar(category_frame, orient="vertical", command=category_tree.yview)
-    category_scrollbar_x = ttk.Scrollbar(category_frame, orient="horizontal", command=category_tree.xview)
-    category_tree.configure(yscrollcommand=category_scrollbar_y.set, xscrollcommand=category_scrollbar_x.set)
-    category_scrollbar_y.pack(side="right", fill="y")
-    category_scrollbar_x.pack(side="bottom", fill="x")
-    category_tree.pack(fill="both", expand=True)
-
-    # Zakładka grupowania - uproszczona
-    print("\nTworzenie zakładki grupowania...")
-
-    # Tworzenie prostego grupowania
-    try:
-        simple_groups = create_simple_grouping(files_info)
-
-        # Utworzenie widoku drzewa do wyświetlenia grup plików
-        group_tree = ttk.Treeview(grouping_frame, show="tree headings")
-        group_tree.heading("#0", text="Grupy plików")
-        group_tree.column("#0", width=400)
-
-        # Dodanie głównych kategorii grupowania
-        extension_node = group_tree.insert("", "end", text="Według rozszerzenia", open=True)
-        type_node = group_tree.insert("", "end", text="Według typu pliku", open=True)
-        size_node = group_tree.insert("", "end", text="Według rozmiaru", open=True)
-        date_node = group_tree.insert("", "end", text="Według daty", open=True)
-
-        # Pomocnicza funkcja do dodawania plików do grupy
-        def add_files_to_group(parent_node, category, files):
-            try:
-                group_node = group_tree.insert(parent_node, "end", text=f"{category} ({len(files)})", open=False)
-                for file in files[:10]:  # Pokaż tylko pierwsze 10 plików
-                    group_tree.insert(group_node, "end", text=f"{file.name}{file.extension}")
-                if len(files) > 10:
-                    group_tree.insert(group_node, "end", text=f"... i {len(files) - 10} więcej")
-            except Exception as group_error:
-                print(f"Błąd dodawania grupy: {group_error}")
-
-        # Wypełnianie drzewa dla każdej kategorii grupowania
-        print("Wypełnianie drzewa grupowania:")
-
-        # Według rozszerzenia
-        try:
-            for category, files in simple_groups['extension'].items():
-                add_files_to_group(extension_node, category, files)
-        except Exception as ext_error:
-            print(f"Błąd dodawania grup według rozszerzenia: {ext_error}")
-
-        # Według typu pliku
-        try:
-            for category, files in simple_groups['type'].items():
-                add_files_to_group(type_node, category, files)
-        except Exception as type_error:
-            print(f"Błąd dodawania grup według typu: {type_error}")
-
-        # Według rozmiaru
-        try:
-            for category, files in simple_groups['size'].items():
-                add_files_to_group(size_node, category, files)
-        except Exception as size_error:
-            print(f"Błąd dodawania grup według rozmiaru: {size_error}")
-
-        # Według daty
-        try:
-            for category, files in simple_groups['date'].items():
-                add_files_to_group(date_node, category, files)
-        except Exception as date_error:
-            print(f"Błąd dodawania grup według daty: {date_error}")
-
-    except Exception as e:
-        print(f"BŁĄD podczas tworzenia drzewa grup: {e}")
-        traceback.print_exc()
-        # Dodaj prostą etykietę w przypadku błędu
-        error_label = ttk.Label(grouping_frame, text="Nie udało się wygenerować grup")
-        error_label.pack()
-
-    # Dodanie paska przewijania dla drzewa grupowania
-    try:
-        group_scrollbar_y = ttk.Scrollbar(grouping_frame, orient="vertical", command=group_tree.yview)
-        group_scrollbar_x = ttk.Scrollbar(grouping_frame, orient="horizontal", command=group_tree.xview)
-        group_tree.configure(yscrollcommand=group_scrollbar_y.set, xscrollcommand=group_scrollbar_x.set)
-        group_scrollbar_y.pack(side="right", fill="y")
-        group_scrollbar_x.pack(side="bottom", fill="x")
-        group_tree.pack(fill="both", expand=True)
-    except:
-        print("Błąd podczas dodawania pasków przewijania")
-
-    # Przycisk do eksportu danych
-    export_button = tk.Button(
-        table_window,
-        text="Eksportuj do pliku CSV",
-        command=lambda: export_to_csv(files_info)
-    )
-    export_button.pack(pady=10)
-
-    print("Zakończono tworzenie interfejsu tabeli plików")
-
-
-def create_simple_grouping(files_info):
-    """Tworzy proste grupowanie plików"""
-    from collections import defaultdict
-
-    groups = {
-        'extension': defaultdict(list),
-        'type': defaultdict(list),
-        'size': defaultdict(list),
-        'date': defaultdict(list)
-    }
-
-    for file_info in files_info:
-        # Według rozszerzenia
-        ext = file_info.extension.lower() if file_info.extension else "(brak)"
-        groups['extension'][ext].append(file_info)
-
-        # Według typu pliku
-        groups['type'][file_info.category_extension].append(file_info)
-
-        # Według rozmiaru
-        groups['size'][file_info.size_category].append(file_info)
-
-        # Według daty
-        groups['date'][file_info.date_category].append(file_info)
-
-    return groups
+    ResultsWindow(parent, files_info)

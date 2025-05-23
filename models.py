@@ -1,99 +1,98 @@
-
-# models.py
+# models.py - Uproszczony model danych
+from dataclasses import dataclass, field
+from typing import List, Dict, Optional
+from pathlib import Path
 from datetime import datetime
-import traceback
-import os
 
 
+@dataclass
 class FileInfo:
-    """Klasa przechowująca informacje o przeniesionym pliku"""
+    """Uproszczony model informacji o pliku"""
+    name: str
+    extension: str
+    source_path: str
+    destination_path: str = ""
+    status: str = "pending"
+    size: int = 0
+    category: str = "nieznana"
+    timestamp: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-    def __init__(self, name, extension, source_path, destination_path, status,
-                 file_size=0, creation_date="", modification_date="", attributes="",
-                 mime_type="", file_signature="", keywords="", headers_info="",
-                 category_extension="", category_name=None, suggested_locations=None,
-                 size_category="", date_category="", subject_categories=None,
-                 time_pattern_categories=None, all_categories=None):
-        self.name = name
-        self.extension = extension
-        self.source_path = source_path
-        self.destination_path = destination_path
-        self.status = status
+    # Opcjonalne metadane
+    creation_date: str = ""
+    modification_date: str = ""
+    mime_type: str = ""
+    keywords: str = ""
 
-        # Ustawiamy timestamp na aktualny czas w momencie utworzenia obiektu
-        self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    @property
+    def display_size(self) -> str:
+        """Formatuje rozmiar pliku"""
+        if self.size < 1024:
+            return f"{self.size} B"
+        elif self.size < 1024 ** 2:
+            return f"{self.size / 1024:.1f} KB"
+        elif self.size < 1024 ** 3:
+            return f"{self.size / (1024 ** 2):.1f} MB"
+        else:
+            return f"{self.size / (1024 ** 3):.1f} GB"
 
-        # Znajdź klasę FileInfo w pliku models.py
-        # i zmodyfikuj część dotyczącą file_size:
+    @property
+    def full_name(self) -> str:
+        """Zwraca pełną nazwę z rozszerzeniem"""
+        return f"{self.name}{self.extension}"
 
-        # Podstawowe metadane
-        # Upewniamy się, że file_size jest liczbą
-        # Znajdź klasę FileInfo w pliku models.py
-        # i zmodyfikuj część dotyczącą file_size:
+    @classmethod
+    def from_path(cls, file_path: str) -> 'FileInfo':
+        """Tworzy FileInfo z ścieżki pliku"""
+        path = Path(file_path)
 
-        # Podstawowe metadane
-        # Upewniamy się, że file_size jest liczbą
         try:
-            # Drukujemy diagnostykę dla rozmiaru pliku
-            print(f"FileInfo otrzymał rozmiar: {file_size} typu {type(file_size)}")
+            size = path.stat().st_size
+            ctime = datetime.fromtimestamp(path.stat().st_ctime).strftime("%Y-%m-%d %H:%M:%S")
+            mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        except:
+            size = 0
+            ctime = mtime = "Nieznana"
 
-            # Konwersja na int z obsługą różnych typów danych
-            if file_size is None:
-                self.file_size = 0
-            elif isinstance(file_size, (int, float)):
-                self.file_size = int(file_size)
-            elif isinstance(file_size, str):
-                # Usuń znaki, które mogą przeszkadzać w konwersji (np. przecinki)
-                cleaned_size = ''.join(c for c in file_size if c.isdigit() or c == '.')
-                self.file_size = int(float(cleaned_size)) if cleaned_size else 0
-            else:
-                # Spróbuj bezpośrednio przekonwertować na int
-                try:
-                    self.file_size = int(file_size)
-                except:
-                    self.file_size = 0
+        return cls(
+            name=path.stem,
+            extension=path.suffix,
+            source_path=str(path),
+            size=size,
+            creation_date=ctime,
+            modification_date=mtime
+        )
 
-            print(f"FileInfo ustawił rozmiar na: {self.file_size} typu {type(self.file_size)}")
 
-            # Upewnij się, że rozmiar nie jest ujemny i nie jest podejrzanie mały dla realnego pliku
-            if self.file_size < 0:
-                print(f"Wykryto ujemny rozmiar ({self.file_size}), ustawiam na 0")
-                self.file_size = 0
+@dataclass
+class TransferHistory:
+    """Historia transferów plików"""
+    extensions: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    destinations: Dict[str, int] = field(default_factory=dict)
 
-            # Dla bezpieczeństwa, jeśli znamy ścieżkę źródłową, spróbuj jeszcze raz pobrać rozmiar
-            if self.file_size <= 10 and self.source_path and os.path.exists(self.source_path):
-                try:
-                    direct_size = os.path.getsize(self.source_path)
-                    print(f"Wykryto podejrzanie mały rozmiar. Próba bezpośrednia dała: {direct_size}")
-                    if direct_size > self.file_size:
-                        print(f"Aktualizuję rozmiar z {self.file_size} na {direct_size}")
-                        self.file_size = direct_size
-                except Exception as size_error:
-                    print(f"Nie udało się pobrać bezpośredniego rozmiaru: {size_error}")
+    def record_transfer(self, file_info: FileInfo):
+        """Zapisuje transfer do historii"""
+        if file_info.status != "success" or not file_info.destination_path:
+            return
 
-        except Exception as e:
-            print(f"Błąd konwersji rozmiaru pliku: {e}. Wartość: {file_size}")
-            traceback.print_exc()
-            self.file_size = 0
+        ext = file_info.extension.lower()
+        dest = str(Path(file_info.destination_path).parent)
 
-        self.creation_date = creation_date
-        self.modification_date = modification_date
-        self.attributes = attributes  # atrybuty pliku jako string
+        # Aktualizuj historię rozszerzeń
+        if ext not in self.extensions:
+            self.extensions[ext] = {}
+        if dest not in self.extensions[ext]:
+            self.extensions[ext][dest] = 0
+        self.extensions[ext][dest] += 1
 
-        # Zaawansowane metadane
-        self.mime_type = mime_type
-        self.file_signature = file_signature
-        self.keywords = keywords
-        self.headers_info = headers_info
+        # Aktualizuj historię destynacji
+        if dest not in self.destinations:
+            self.destinations[dest] = 0
+        self.destinations[dest] += 1
 
-        # Informacje o kategoryzacji
-        self.category_extension = category_extension  # kategoria na podstawie rozszerzenia
-        self.category_name = category_name or []  # kategorie na podstawie nazwy
-        self.suggested_locations = suggested_locations or []  # sugerowane lokalizacje
-
-        # Nowe kategorie
-        self.size_category = size_category  # kategoria według rozmiaru
-        self.date_category = date_category  # kategoria według daty
-        self.subject_categories = subject_categories or []  # kategorie przedmiotów
-        self.time_pattern_categories = time_pattern_categories or []  # kategorie wzorców czasowych
-        self.all_categories = all_categories or []  # wszystkie kategorie razem
+    def suggest_destination(self, extension: str) -> Optional[str]:
+        """Sugeruje destynację na podstawie historii"""
+        ext = extension.lower()
+        if ext in self.extensions:
+            destinations = self.extensions[ext]
+            return max(destinations.items(), key=lambda x: x[1])[0]
+        return None

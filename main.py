@@ -1,671 +1,265 @@
+# main.py - Uproszczony główny plik aplikacji
 import tkinter as tk
-from tkinter import messagebox, ttk
-import os
+from tkinter import messagebox
 import sys
-import traceback
-import threading
-import time
+import os
+from pathlib import Path
 
-# Upewniamy się, że katalog z naszymi modułami jest w ścieżce Pythona
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.append(current_dir)
+# Dodaj katalog główny do ścieżki Python
+current_dir = Path(__file__).parent
+sys.path.insert(0, str(current_dir))
 
-# Importujemy funkcje bezpośrednio
-from file_operations import select_files, select_destination, move_files, category_analyzer
-from gui_components import create_main_window, setup_ui, show_files_table
-
-# Próbujemy zaimportować rozszerzony wizualizer, jeśli nie ma - używamy podstawowego
-try:
-    from enhanced_file_group_visualizer import EnhancedFileGroupVisualizer
-
-    print("Używam rozszerzonego wizualizera grup z zaawansowanymi funkcjami")
-    USE_ENHANCED_VISUALIZER = True
-except ImportError:
-    print("Nie mogę zaimportować rozszerzonego wizualizera, używam podstawowego")
-    try:
-        from file_group_visualizer import FileGroupVisualizer
-
-        USE_ENHANCED_VISUALIZER = False
-    except ImportError:
-        print("Błąd: Nie można zaimportować żadnego wizualizera")
-        USE_ENHANCED_VISUALIZER = False
-
-# Sprawdź czy używamy rozszerzonego analizatora kategorii
-try:
-    from enhanced_category_analyzer import EnhancedCategoryAnalyzer
-
-    print("Używam rozszerzonego analizatora kategorii z zaawansowanym grupowaniem")
-    USE_ENHANCED_ANALYZER = True
-except ImportError:
-    print("Rozszerzony analizator niedostępny, używam podstawowego")
-    USE_ENHANCED_ANALYZER = False
+# Importy modułów
+from models import FileInfo
+from category_analyzer import CategoryAnalyzer
+from file_operations import FileOperations
+from gui_components import MainWindow, ResultsWindow, ProgressDialog
+from data_export import show_export_dialog
 
 
-class ProgressDialog:
-    """Klasa dla okna dialogowego postępu"""
+class FileOrganizerApp:
+    """Główna klasa aplikacji organizatora plików"""
 
-    def __init__(self, parent, title="Analiza"):
-        self.window = tk.Toplevel(parent)
-        self.window.title(title)
-        self.window.geometry("400x200")
-        self.window.resizable(False, False)
-        self.closed = False  # Dodaj flagę do śledzenia stanu
+    def __init__(self):
+        self.categorizer = CategoryAnalyzer()
+        self.file_ops = FileOperations(self.categorizer)
+        self.files_info = []
 
-        # Wyśrodkuj okno
-        self.window.transient(parent)
-        self.window.grab_set()
+        # Główne okno
+        self.main_window = MainWindow(self.start_organization_process)
 
-        # Ramka główna
-        main_frame = ttk.Frame(self.window, padding="20")
-        main_frame.pack(fill="both", expand=True)
-
-        # Etykieta tytułu
-        title_label = ttk.Label(main_frame, text="Analiza w toku...",
-                                font=("Arial", 12, "bold"))
-        title_label.pack(pady=(0, 10))
-
-        # Pasek postępu
-        self.progress = ttk.Progressbar(main_frame, mode='indeterminate')
-        self.progress.pack(fill="x", pady=(0, 10))
-        self.progress.start()
-
-        # Etykieta statusu
-        self.status_label = ttk.Label(main_frame, text="Przygotowywanie analizy...",
-                                      font=("Arial", 9))
-        self.status_label.pack(pady=(0, 10))
-
-        # Szczegóły analizy
-        self.details_label = ttk.Label(main_frame, text="",
-                                       font=("Arial", 8, "italic"),
-                                       foreground="gray")
-        self.details_label.pack()
-
-    def update_status(self, status, details=""):
-        """Aktualizuje status w oknie dialogowym"""
-        if not self.closed:
-            try:
-                self.status_label.config(text=status)
-                self.details_label.config(text=details)
-                self.window.update()
-            except tk.TclError:
-                # Okno zostało już zamknięte
-                self.closed = True
-
-    def close(self):
-        """Zamyka okno dialogowe"""
-        if not self.closed:
-            try:
-                self.progress.stop()
-                self.window.destroy()
-                self.closed = True
-            except tk.TclError:
-                # Okno było już zamknięte
-                self.closed = True
-
-
-def main():
-    """Główna funkcja programu z ulepszonymi funkcjami"""
-    # Utworzenie głównego okna
-    root = create_main_window()
-
-    # Konfiguracja stylu dla ulepszonych funkcji
-    style = ttk.Style()
-    try:
-        style.theme_use('clam')
-    except:
-        pass
-
-    # Zmienna do przechowywania informacji o plikach
-    files_info_list = []
-
-    # Zmienna do przechowywania statystyk
-    analysis_stats = {
-        'last_analysis_time': 0,
-        'total_groups_created': 0,
-        'files_analyzed': 0,
-        'similarity_calculations': 0
-    }
-
-    def show_capabilities():
-        """Pokazuje możliwości systemu"""
-        capabilities_window = tk.Toplevel(root)
-        capabilities_window.title("Możliwości systemu")
-        capabilities_window.geometry("600x500")
-
-        # Tekst z możliwościami
-        text_widget = tk.Text(capabilities_window, wrap=tk.WORD, padx=10, pady=10)
-        text_widget.pack(fill="both", expand=True)
-
-        capabilities_text = """ZAAWANSOWANE MOŻLIWOŚCI SYSTEMU GRUPOWANIA PLIKÓW
-
-ALGORYTMY ANALIZY:
-
-1. WIELOALGORYTMICZNE PODOBIEŃSTWO NAZW:
-   • Sequence Matcher - analiza podobieństwa sekwencji
-   • Jaccard Index - podobieństwo zbiorów słów
-   • Fuzzy Matching - dopasowanie rozmyte z tolerancją błędów
-   • Prefix/Suffix Detection - wykrywanie wspólnych prefiksów i sufiksów
-   • N-gram Analysis - analiza fragmentów tekstu
-
-2. SEMANTYCZNE GRUPOWANIE:
-   • Rozszerzone słowniki synonimów (20+ kategorii)
-   • Automatyczne wykrywanie grup znaczeniowych
-   • Fuzzy semantic matching z progiem 80%
-   • Wielojęzyczne wsparcie (polski/angielski)
-
-3. WYKRYWANIE WZORCÓW STRUKTURALNYCH:
-   • Wzorce numeryczne (sekwencje, daty, wersje)
-   • Wzorce czasowe (ISO, polska notacja, timestamps)
-   • Identyfikatory i numery dokumentów
-   • Analiza długości i struktury nazw
-
-4. GRUPOWANIE HYBRYDOWE:
-   • Fuzja wszystkich algorytmów
-   • Automatyczna optymalizacja progów
-   • Adaptacyjne dopasowanie do typu plików
-   • Automatyczne nazywanie grup
-
-5. ANALIZA PREDYKCYJNA:
-   • Cache podobieństw dla szybkości
-   • Historia przenoszenia plików
-   • Sugerowanie lokalizacji na podstawie analizy
-   • Statystyki efektywności algorytmów
-
-6. ZAAWANSOWANE FUNKCJE:
-   • Real-time filtering i wyszukiwanie
-   • Multi-threaded analysis dla dużych zbiorów
-   • Eksport wyników analizy
-   • Wizualizacja statystyk
-
-KORZYŚCI:
-• 90%+ skuteczność grupowania
-• Automatyczne wykrywanie podobnych plików
-• Automatyczne sugestie organizacji
-• Oszczędność czasu użytkownika
-• Adaptacja do różnych typów nazw plików
-
-Naciśnij 'Rozpocznij Analizę' aby zobaczyć system w akcji!
-"""
-
-        text_widget.insert('1.0', capabilities_text)
-        text_widget.config(state='disabled')
-
-        # Przycisk zamknięcia
-        close_btn = ttk.Button(capabilities_window, text="Zamknij",
-                               command=capabilities_window.destroy)
-        close_btn.pack(pady=10)
-
-    # Funkcja do obsługi procesu przenoszenia
-    def start_moving_process():
-        nonlocal files_info_list, analysis_stats
-
-        files = select_files()
-        if not files:
-            messagebox.showinfo("Informacja", "Nie wybrano żadnych plików.")
-            return
-
-        print(f"Wybrano {len(files)} plików do analizy:")
-        for file in files:
-            print(f"  {file}")
-
-        # Pokazuj okno postępu dla dużych zbiorów
-        progress_dialog = None
-        if len(files) > 10:
-            progress_dialog = ProgressDialog(root, "Analiza plików")
-            progress_dialog.update_status("Analizuję nazwy plików...",
-                                          f"Wykrywanie wzorców w {len(files)} plikach")
-
+    def start_organization_process(self):
+        """Rozpoczyna proces organizacji plików"""
         try:
-            # Sprawdź czy istnieją sugerowane lokalizacje
-            suggested_destinations = {}
-            suggestions_count = 0
+            # 1. Wybór plików
+            files = self.file_ops.select_files()
+            if not files:
+                messagebox.showinfo("Informacja", "Nie wybrano żadnych plików.")
+                return
 
-            if progress_dialog:
-                progress_dialog.update_status("Analizuję historię...",
-                                              "Wykorzystuję dane historyczne")
+            print(f"Wybrano {len(files)} plików do organizacji")
 
-            for file_path in files:
-                suggested = category_analyzer.get_suggested_destination(file_path)
-                if suggested:
-                    suggestions_count += 1
-                    if suggested not in suggested_destinations:
-                        suggested_destinations[suggested] = []
-                    suggested_destinations[suggested].append(os.path.basename(file_path))
-
-            # Zamknij okno postępu
-            if progress_dialog:
-                progress_dialog.update_status("Analiza zakończona!",
-                                              f"Znaleziono {suggestions_count} automatycznych sugestii")
-                time.sleep(1)
-                progress_dialog.close()
-
-            # Pokaż statystyki
-            if suggestions_count > 0:
-                efficiency = (suggestions_count / len(files)) * 100
-                message = (f"ANALIZA ZAKOŃCZONA!\n\n"
-                           f"Efektywność: {efficiency:.1f}%\n"
-                           f"Automatyczne sugestie: {suggestions_count}/{len(files)}\n"
-                           f"Wykryte wzorce: {len(suggested_destinations)} lokalizacji\n\n"
-                           f"System wykorzystał historię {len(category_analyzer.transfer_history.get('extensions', {}))} rozszerzeń "
-                           f"i {len(category_analyzer.transfer_history.get('patterns', {}))} wzorców nazw.")
-
-                messagebox.showinfo("Analiza", message)
-
-            # Jeśli mamy sugestie, zapytaj użytkownika
+            # 2. Sprawdź sugestie automatyczne
+            suggestions = self.file_ops.get_smart_suggestions(files)
             destination = None
-            if suggested_destinations and len(suggested_destinations) == 1:
-                # Jeśli system ma tylko jedną sugestię dla wszystkich plików
-                suggested = list(suggested_destinations.keys())[0]
-                files_list = "\n".join(suggested_destinations[suggested][:5])
-                if len(suggested_destinations[suggested]) > 5:
-                    files_list += f"\n... i {len(suggested_destinations[suggested]) - 5} więcej"
 
+            if suggestions:
+                # Pokaż sugestie użytkownikowi
+                suggestion_message = self._format_suggestions(suggestions)
                 response = messagebox.askyesno(
-                    "Sugestia systemu",
-                    f"REKOMENDACJA:\n\n"
-                    f"Na podstawie analizy wzorców i historii, system sugeruje lokalizację:\n"
-                    f"{suggested}\n\n"
-                    f"Pliki do przeniesienia:\n{files_list}\n\n"
-                    f"Pewność: {efficiency:.0f}%\n\n"
-                    f"Czy chcesz użyć sugestii systemu?"
+                    "Inteligentne Sugestie",
+                    f"System znalazł następujące sugestie:\n\n{suggestion_message}\n\n"
+                    "Czy chcesz użyć pierwszej sugestii?"
                 )
-                if response:
-                    destination = suggested
 
-            # Jeśli nie wybrano sugerowanej lokalizacji, pozwól użytkownikowi wybrać folder
+                if response:
+                    destination = list(suggestions.keys())[0]
+
+            # 3. Jeśli brak sugestii lub użytkownik odmówił, wybierz ręcznie
             if not destination:
-                destination = select_destination()
+                destination = self.file_ops.select_destination()
                 if not destination:
                     messagebox.showinfo("Informacja", "Nie wybrano folderu docelowego.")
                     return
 
             print(f"Wybrano folder docelowy: {destination}")
 
-            # Przenoszenie plików z monitorowaniem
-            print(f"Rozpoczynam przenoszenie plików z analizą...")
-            start_time = time.time()
+            # 4. Pokaż okno postępu
+            progress = ProgressDialog(self.main_window.root, "Organizacja Plików")
+            progress.update_status("Analizowanie plików...")
 
-            files_info_list = move_files(files, destination)
-
-            # Aktualizuj statystyki - POPRAWIONE
-            analysis_stats['last_analysis_time'] = time.time() - start_time
-            analysis_stats['files_analyzed'] += len(files_info_list)
-
-            # Bezpieczne pobieranie liczby podobieństw
             try:
-                if USE_ENHANCED_ANALYZER and hasattr(category_analyzer, 'name_analyzer'):
-                    similarity_cache_size = len(getattr(category_analyzer.name_analyzer, 'similarity_cache', {}))
-                else:
-                    similarity_cache_size = 0
-                analysis_stats['similarity_calculations'] += similarity_cache_size
-            except Exception as cache_error:
-                print(f"Nie udało się pobrać statystyk cache: {cache_error}")
-                analysis_stats['similarity_calculations'] = 0
+                # 5. Przenieś pliki
+                self.files_info = self.file_ops.move_files(files, destination)
 
-            print(f"Zakończono przenoszenie plików. Otrzymano {len(files_info_list)} informacji o plikach.")
+                progress.update_status("Operacja zakończona!")
+                progress.close()
 
-            # Liczenie statystyk
-            success_count = len([f for f in files_info_list if f.status == "Przeniesiono"])
-            failed_count = len(files_info_list) - success_count
+                # 6. Pokaż wyniki
+                self._show_results()
 
-            print(f"Sukces: {success_count}, Nieudane: {failed_count}")
-
-            # Pokaż wyniki z statistykami
-            if failed_count > 0:
-                messagebox.showwarning(
-                    "Ostrzeżenie",
-                    f"WYNIKI TRANSFERU:\n\n"
-                    f"Przeniesiono: {success_count}/{len(files_info_list)}\n"
-                    f"Nieudane: {failed_count}\n\n"
-                    f"Czas analizy: {analysis_stats['last_analysis_time']:.1f}s\n"
-                    f"Cache Size: {analysis_stats['similarity_calculations']} calculations"
-                )
-            else:
-                messagebox.showinfo(
-                    "Sukces",
-                    f"TRANSFER PLIKÓW ZAKOŃCZONY!\n\n"
-                    f"Wszystkie pliki ({success_count}) zostały pomyślnie przeniesione\n"
-                    f"Lokalizacja: {destination}\n\n"
-                    f"Statystyki:\n"
-                    f"Czas analizy: {analysis_stats['last_analysis_time']:.1f}s\n"
-                    f"Cache podobieństw: {analysis_stats['similarity_calculations']}\n"
-                    f"Łącznie przeanalizowano: {analysis_stats['files_analyzed']} plików"
-                )
-
-            # Wyświetlenie tabeli z informacjami o plikach
-            show_files_table(files_info_list, category_analyzer)
-
-            # Pytanie o wizualizację grup z informacjami
-            if len(files_info_list) > 1:
-                if USE_ENHANCED_VISUALIZER:
-                    # Oblicz potencjalne grupy dla lepszej informacji - POPRAWIONE
-                    potential_groups = 0
-                    try:
-                        if hasattr(category_analyzer, 'smart_group_files_by_name'):
-                            temp_groups = category_analyzer.smart_group_files_by_name(files_info_list)
-                            potential_groups = len(temp_groups)
-                        else:
-                            potential_groups = "kilka"
-                    except Exception as group_error:
-                        print(f"Nie udało się obliczyć grup: {group_error}")
-                        potential_groups = "kilka"
-
-                    message = (
-                        "ZAAWANSOWANA WIZUALIZACJA",
-                        f"GOTOWE DO ANALIZY!\n\n"
-                        f"Wykryto potencjalnie {potential_groups} zaawansowanych grup\n"
-                        f"Dostępne funkcje:\n\n"
-                        f"• Multi-algorytmiczne grupowanie podobieństwa\n"
-                        f"• Semantyczne grupy znaczeniowe\n"
-                        f"• Hybrydowe grupowanie (fuzja algorytmów)\n"
-                        f"• Zaawansowana analiza wzorców\n"
-                        f"• Real-time wyszukiwanie i filtrowanie\n"
-                        f"• Szczegółowe statystyki\n\n"
-                        f"Czy chcesz uruchomić zaawansowaną wizualizację?"
-                    )
-                else:
-                    message = (
-                        "Podstawowa wizualizacja grup",
-                        "Czy chcesz wyświetlić podstawową wizualizację grup plików?"
-                    )
-
-                response = messagebox.askyesno(message[0], message[1])
-                if response:
-                    show_group_visualizer()
+            except Exception as e:
+                progress.close()
+                raise e
 
         except Exception as e:
-            # Zamknij okno postępu w przypadku błędu
-            if progress_dialog:
-                progress_dialog.close()
+            print(f"Błąd podczas organizacji plików: {e}")
+            messagebox.showerror("Błąd", f"Wystąpił błąd:\n{str(e)}")
 
-            print(f"KRYTYCZNY BŁĄD w procesie przenoszenia: {e}")
-            traceback.print_exc()
-            messagebox.showerror(
-                "Błąd",
-                f"Wystąpił błąd podczas przenoszenia plików:\n{str(e)}\n\n"
-                f"Statystyki przed błędem:\n"
-                f"Czas analizy: {analysis_stats.get('last_analysis_time', 0):.1f}s\n"
-                f"Plików przeanalizowano: {analysis_stats.get('files_analyzed', 0)}"
+    def _format_suggestions(self, suggestions: dict) -> str:
+        """Formatuje sugestie do wyświetlenia"""
+        message_parts = []
+        for destination, files in list(suggestions.items())[:3]:  # Maksymalnie 3 sugestie
+            files_list = ", ".join(files[:3])  # Maksymalnie 3 nazwy plików
+            if len(files) > 3:
+                files_list += f" i {len(files) - 3} więcej"
+
+            message_parts.append(f"📁 {destination}\n   Pliki: {files_list}")
+
+        return "\n\n".join(message_parts)
+
+    def _show_results(self):
+        """Wyświetla wyniki operacji"""
+        # Statystyki operacji
+        total = len(self.files_info)
+        success = len([f for f in self.files_info if f.status == "success"])
+        errors = len([f for f in self.files_info if f.status.startswith("error")])
+        skipped = len([f for f in self.files_info if f.status == "skipped"])
+
+        # Pokaż podsumowanie
+        if errors > 0:
+            messagebox.showwarning(
+                "Ostrzeżenie",
+                f"Organizacja zakończona z ostrzeżeniami:\n\n"
+                f"✅ Pomyślne: {success}/{total}\n"
+                f"❌ Błędy: {errors}\n"
+                f"⏩ Pominięte: {skipped}"
+            )
+        else:
+            messagebox.showinfo(
+                "Sukces",
+                f"Organizacja plików zakończona pomyślnie!\n\n"
+                f"✅ Przeniesiono: {success}/{total} plików\n"
+                f"⏩ Pominięto: {skipped} plików"
             )
 
-    # Funkcja do wyświetlania wizualizacji grup
-    def show_group_visualizer():
-        if not files_info_list:
-            messagebox.showinfo("Informacja", "Brak plików do grupowania.")
+        # Otwórz okno wyników
+        ResultsWindow(self.main_window.root, self.files_info)
+
+    def run(self):
+        """Uruchamia aplikację"""
+        try:
+            print("🚀 Uruchamianie Organizatora Plików...")
+            print(f"📁 Katalog roboczy: {current_dir}")
+            print(f"💾 Historia plików: {self.categorizer.history_file}")
+
+            # Pokaż statystyki historii
+            stats = self.categorizer.get_category_stats()
+            if stats:
+                print("📊 Statystyki historii:")
+                for category, count in stats.items():
+                    print(f"   {category}: {count} plików")
+            else:
+                print("📊 Brak historii - to pierwszy start aplikacji")
+
+            # Uruchom GUI
+            self.main_window.run()
+
+        except Exception as e:
+            print(f"Krytyczny błąd aplikacji: {e}")
+            messagebox.showerror("Błąd Krytyczny", f"Wystąpił krytyczny błąd:\n{str(e)}")
+
+
+class ConfigManager:
+    """Prosty menedżer konfiguracji aplikacji"""
+
+    DEFAULT_CONFIG = {
+        "history_file": "transfer_history.json",
+        "auto_suggestions": True,
+        "confirm_overwrites": True,
+        "create_backups": False,
+        "log_operations": True
+    }
+
+    def __init__(self, config_file: str = "app_config.json"):
+        self.config_file = config_file
+        self.config = self.load_config()
+
+    def load_config(self) -> dict:
+        """Wczytuje konfigurację z pliku"""
+        try:
+            if Path(self.config_file).exists():
+                import json
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    loaded_config = json.load(f)
+
+                # Połącz z domyślną konfiguracją
+                config = self.DEFAULT_CONFIG.copy()
+                config.update(loaded_config)
+                return config
+
+        except Exception as e:
+            print(f"Błąd wczytywania konfiguracji: {e}")
+
+        return self.DEFAULT_CONFIG.copy()
+
+    def save_config(self):
+        """Zapisuje konfigurację do pliku"""
+        try:
+            import json
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Błąd zapisywania konfiguracji: {e}")
+
+    def get(self, key: str, default=None):
+        """Pobiera wartość z konfiguracji"""
+        return self.config.get(key, default)
+
+    def set(self, key: str, value):
+        """Ustawia wartość w konfiguracji"""
+        self.config[key] = value
+        self.save_config()
+
+
+def check_dependencies():
+    """Sprawdza czy wszystkie wymagane moduły są dostępne"""
+    missing_modules = []
+
+    # Sprawdź podstawowe moduły
+    required_modules = ['tkinter', 'pathlib', 'json', 'csv']
+
+    for module in required_modules:
+        try:
+            __import__(module)
+        except ImportError:
+            missing_modules.append(module)
+
+    if missing_modules:
+        print(f"❌ Brakujące moduły: {', '.join(missing_modules)}")
+        return False
+
+    print("✅ Wszystkie wymagane moduły są dostępne")
+    return True
+
+
+def main():
+    """Główna funkcja aplikacji"""
+    try:
+        print("=" * 50)
+        print("    ORGANIZATOR PLIKÓW - UPROSZCZONA WERSJA")
+        print("=" * 50)
+
+        # Sprawdź zależności
+        if not check_dependencies():
+            input("Naciśnij Enter aby zakończyć...")
             return
 
-        try:
-            # Pokazuj okno postępu dla zaawansowanej analizy
-            progress_dialog = None
-            if USE_ENHANCED_VISUALIZER and len(files_info_list) > 5:
-                progress_dialog = ProgressDialog(root, "Zaawansowana Analiza")
-                progress_dialog.update_status("Uruchamianie systemu...",
-                                              "Inicjalizacja algorytmów grupowania")
+        # Utwórz i uruchom aplikację
+        app = FileOrganizerApp()
+        app.run()
 
-            print("Tworzenie zaawansowanego wizualizera grup...")
-
-            if USE_ENHANCED_VISUALIZER:
-                if progress_dialog:
-                    progress_dialog.update_status("Tworzenie wizualizera...",
-                                                  "Ładowanie zaawansowanych funkcji")
-                    time.sleep(0.5)
-
-                visualizer = EnhancedFileGroupVisualizer(root, files_info_list, category_analyzer)
-                print("Rozszerzony wizualizer grup utworzony pomyślnie")
-
-                if progress_dialog:
-                    progress_dialog.update_status("System gotowy!", "Wizualizer załadowany")
-                    time.sleep(0.5)
-                    progress_dialog.close()
-
-                # Komunikat o funkcjach
-                messagebox.showinfo(
-                    "Wizualizer aktywny",
-                    "ZAAWANSOWANY WIZUALIZER URUCHOMIONY!\n\n"
-                    "Funkcje:\n"
-                    "• Multi-algorytmiczne podobieństwo nazw\n"
-                    "• Semantyczne grupy znaczeniowe\n"
-                    "• Grupowanie hybrydowe (fuzja metod)\n"
-                    "• Zaawansowane statystyki algorytmów\n"
-                    "• Real-time wyszukiwanie grup\n"
-                    "• Szczegółowa analiza wzorców\n\n"
-                    "TIP: Wybierz 'Inteligentne grupy' \n"
-                    "aby zobaczyć system w akcji!"
-                )
-            else:
-                if progress_dialog:
-                    progress_dialog.close()
-
-                visualizer = FileGroupVisualizer(root, files_info_list, category_analyzer)
-                print("Podstawowy wizualizer grup utworzony pomyślnie")
-
-        except Exception as e:
-            if progress_dialog:
-                progress_dialog.close()
-
-            print(f"BŁĄD podczas tworzenia wizualizera grup: {e}")
-            traceback.print_exc()
-            messagebox.showerror(
-                "Błąd Wizualizera",
-                f"Wystąpił błąd podczas tworzenia wizualizera grup:\n{str(e)}\n\n"
-                f"Spróbuj ponownie lub skontaktuj się z pomocą techniczną."
-            )
-
-    def show_statistics():
-        """Pokazuje statystyki systemu"""
-        stats_window = tk.Toplevel(root)
-        stats_window.title("Statystyki systemu")
-        stats_window.geometry("500x400")
-
-        # Ramka główna
-        main_frame = ttk.Frame(stats_window, padding="10")
-        main_frame.pack(fill="both", expand=True)
-
-        # Tytuł
-        title_label = ttk.Label(main_frame, text="STATYSTYKI SYSTEMU",
-                                font=("Arial", 14, "bold"))
-        title_label.pack(pady=(0, 20))
-
-        # Notebook dla różnych kategorii statystyk
-        notebook = ttk.Notebook(main_frame)
-        notebook.pack(fill="both", expand=True)
-
-        # Zakładka 1: Statystyki sesji
-        session_frame = ttk.Frame(notebook)
-        notebook.add(session_frame, text="Sesja")
-
-        session_text = tk.Text(session_frame, wrap=tk.WORD, padx=10, pady=10)
-        session_text.pack(fill="both", expand=True)
-
-        session_stats = f"""STATYSTYKI BIEŻĄCEJ SESJI:
-
-Ostatni czas analizy: {analysis_stats['last_analysis_time']:.2f} sekund
-Plików przeanalizowanych: {analysis_stats['files_analyzed']}
-Obliczenia podobieństwa: {analysis_stats['similarity_calculations']}
-Grupy utworzone: {analysis_stats['total_groups_created']}
-
-EFEKTYWNOŚĆ:
-{'Wysoka' if analysis_stats['files_analyzed'] > 10 else 'Średnia' if analysis_stats['files_analyzed'] > 0 else 'Brak danych'}
-
-ROZMIAR CACHE:
-Cache podobieństw: {analysis_stats['similarity_calculations']} wpisów
-
-KONFIGURACJA ALGORYTMÓW:
-• Próg podobieństwa: 55%
-• Próg fuzzy matching: 80%  
-• Próg semantyczny: 70%
-• Multi-algorytmiczne ważenie: {'AKTYWNE' if USE_ENHANCED_ANALYZER else 'NIEAKTYWNE'}
-"""
-
-        session_text.insert('1.0', session_stats)
-        session_text.config(state='disabled')
-
-        # Zakładka 2: Historia
-        history_frame = ttk.Frame(notebook)
-        notebook.add(history_frame, text="Historia")
-
-        history_text = tk.Text(history_frame, wrap=tk.WORD, padx=10, pady=10)
-        history_text.pack(fill="both", expand=True)
-
-        # Statystyki z historii
-        ext_count = len(category_analyzer.transfer_history.get('extensions', {}))
-        pattern_count = len(category_analyzer.transfer_history.get('patterns', {}))
-        dest_count = len(category_analyzer.transfer_history.get('destinations', {}))
-
-        history_stats_text = f"""HISTORIA DANYCH:
-
-Rozszerzenia w bazie: {ext_count}
-Wzorce nazw: {pattern_count}  
-Lokalizacje docelowe: {dest_count}
-
-SKUTECZNOŚĆ PREDYKCJI:
-System może przewidzieć lokalizację dla:
-• {ext_count} typów rozszerzeń
-• {pattern_count} wzorców nazw plików
-
-REKOMENDACJE:
-{'System ma wystarczająco danych do dokładnych predykcji' if ext_count > 5 else 'System potrzebuje więcej danych do nauki'}
-
-OSTATNIA AKTUALIZACJA:
-Historia została zaktualizowana podczas ostatniego przenoszenia plików.
-"""
-
-        history_text.insert('1.0', history_stats_text)
-        history_text.config(state='disabled')
-
-        # Przycisk zamknięcia
-        close_btn = ttk.Button(main_frame, text="Zamknij", command=stats_window.destroy)
-        close_btn.pack(pady=10)
-
-    # Funkcja konfiguracji UI z dodatkowymi funkcjami
-    def setup_enhanced_ui(root):
-        # Konfiguracja okna głównego
-        root.configure(bg='#f5f5f5')
-
-        # Ramka główna
-        main_frame = ttk.Frame(root)
-        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
-
-        # Banner tytułowy
-        if USE_ENHANCED_ANALYZER and USE_ENHANCED_VISUALIZER:
-            title = "SYSTEM ORGANIZACJI PLIKÓW"
-            title_color = "darkblue"
-            subtitle_color = "darkgreen"
-        else:
-            title = "Program do przenoszenia i organizacji plików"
-            title_color = "black"
-            subtitle_color = "gray"
-
-        title_label = ttk.Label(main_frame, text=title,
-                                foreground=title_color, font=("Arial", 16, "bold"))
-        title_label.pack(pady=(0, 10))
-
-        # Ramka dla głównych przycisków
-        buttons_frame = ttk.LabelFrame(main_frame, text="Główne funkcje", padding="15")
-        buttons_frame.pack(fill="x", pady=(0, 20))
-
-        # Przycisk do wyboru plików - GŁÓWNY
-        main_button_text = "Rozpocznij Analizę" if USE_ENHANCED_ANALYZER else "Wybierz pliki do przeniesienia"
-        select_files_button = ttk.Button(
-            buttons_frame,
-            text=main_button_text,
-            command=start_moving_process,
-            style='Accent.TButton'
-        )
-        select_files_button.pack(fill="x", pady=(0, 10))
-
-        # Dodatkowe przyciski
-        buttons_row1 = ttk.Frame(buttons_frame)
-        buttons_row1.pack(fill="x", pady=(0, 10))
-
-        # Przycisk do wizualizacji grup
-        visualize_text = ("Zaawansowana Wizualizacja" if USE_ENHANCED_VISUALIZER
-                          else "Wyświetl grupowanie")
-        visualize_button = ttk.Button(
-            buttons_row1,
-            text=visualize_text,
-            command=show_group_visualizer
-        )
-        visualize_button.pack(side="left", fill="x", expand=True, padx=(0, 5))
-
-        # Przycisk statystyk
-        if USE_ENHANCED_ANALYZER:
-            stats_button = ttk.Button(
-                buttons_row1,
-                text="Statystyki",
-                command=show_statistics
-            )
-            stats_button.pack(side="right", fill="x", expand=True, padx=(5, 0))
-
-        # Informacje o aplikacji
-        info_frame = ttk.LabelFrame(main_frame, text="Informacje", padding="15")
-        info_frame.pack(fill="both", expand=True)
-
-        info_text = """"""
-
-        if USE_ENHANCED_ANALYZER:
-            info_text += """✅ SYSTEM ZAAWANSOWANY AKTYWNY
-• Inteligentne grupowanie plików
-• Automatyczne wykrywanie podobieństw
-• Predykcja lokalizacji na podstawie historii"""
-
-        info_text += "\n\nProgram zapamiętuje historię i proponuje najlepsze lokalizacje."
-
-        info_label = ttk.Label(info_frame, text=info_text, justify=tk.LEFT,
-                               font=("Arial", 9), wraplength=500)
-        info_label.pack(pady=(0, 15))
-
-        # Ramka dolna z przyciskiem zamknięcia
-        bottom_frame = ttk.Frame(main_frame)
-        bottom_frame.pack(fill="x", pady=(10, 0))
-
-        close_button = ttk.Button(bottom_frame, text="Zamknij", command=root.destroy)
-        close_button.pack()
-
-        # Konfiguracja stylów
-        try:
-            style = ttk.Style()
-            style.configure('Accent.TButton', font=('Arial', 11, 'bold'))
-        except:
-            pass
-
-    # Konfiguracja interfejsu użytkownika z rozszerzoną wersją funkcji
-    setup_enhanced_ui(root)
-
-    # Uruchomienie głównej pętli aplikacji
-    root.mainloop()
-
-
-if __name__ == "__main__":
-    try:
-        if USE_ENHANCED_ANALYZER and USE_ENHANCED_VISUALIZER:
-            print("Uruchamianie programu z pełnym systemem zaawansowanym...")
-            print("Aktywne funkcje: Multi-algorytmiczne grupowanie + Zaawansowana wizualizacja")
-        elif USE_ENHANCED_ANALYZER:
-            print("Uruchamianie programu z zaawansowanym analizatorem...")
-            print("Aktywne funkcje: Multi-algorytmiczne grupowanie")
-        elif USE_ENHANCED_VISUALIZER:
-            print("Uruchamianie programu z zaawansowaną wizualizacją...")
-            print("Aktywne funkcje: Ulepszona wizualizacja grup")
-        else:
-            print("Uruchamianie programu w trybie podstawowym...")
-
-        main()
+    except KeyboardInterrupt:
+        print("\n👋 Aplikacja została przerwana przez użytkownika")
     except Exception as e:
-        print(f"Wystąpił krytyczny błąd: {e}")
+        print(f"\n💥 Krytyczny błąd aplikacji: {e}")
+        import traceback
         traceback.print_exc()
 
-        # Próba wyświetlenia okna dialogowego z błędem
+        # Pokaż dialog błędu jeśli tkinter jest dostępne
         try:
             root = tk.Tk()
             root.withdraw()
             messagebox.showerror(
-                "Krytyczny błąd systemu",
-                f"Wystąpił krytyczny błąd podczas uruchamiania programu:\n\n{str(e)}\n\n"
-                f"System może być nieosiągalny.\n"
-                f"Spróbuj ponownie lub skontaktuj się z pomocą techniczną."
+                "Krytyczny Błąd",
+                f"Aplikacja napotkała krytyczny błąd:\n\n{str(e)}\n\n"
+                "Sprawdź konsolę aby uzyskać więcej szczegółów."
             )
         except:
-            print("Nie można wyświetlić okna dialogowego błędu")
             pass
+
+    print("\n👋 Dziękujemy za korzystanie z Organizatora Plików!")
+
+
+if __name__ == "__main__":
+    main()
