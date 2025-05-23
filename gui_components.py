@@ -1,4 +1,4 @@
-# gui_components.py - Uproszczone komponenty GUI
+# gui_components.py - Fixed GUI Components
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import List, Callable
@@ -22,10 +22,19 @@ class MainWindow:
         root.geometry("400x300")
         root.resizable(True, True)
 
-        # Wyśrodkuj okno
-        root.eval('tk::PlaceWindow . center')
+        # Wyśrodkuj okno - poprawiona metoda
+        self.center_window(root, 400, 300)
 
         return root
+
+    def center_window(self, window, width, height):
+        """Wyśrodkowuje okno na ekranie"""
+        window.update_idletasks()
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        window.geometry(f"{width}x{height}+{x}+{y}")
 
     def setup_ui(self):
         """Konfiguruje interfejs użytkownika"""
@@ -104,6 +113,7 @@ class ResultsWindow:
     def __init__(self, parent, files_info: List[FileInfo]):
         self.parent = parent
         self.files_info = files_info
+        self.window = None
         self.setup_window()
         self.setup_ui()
         self.populate_data()
@@ -115,6 +125,18 @@ class ResultsWindow:
         self.window.geometry("900x600")
         self.window.transient(self.parent)
         self.window.grab_set()
+
+        # Wyśrodkuj okno
+        self.center_window(self.window, 900, 600)
+
+    def center_window(self, window, width, height):
+        """Wyśrodkowuje okno na ekranie"""
+        window.update_idletasks()
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        window.geometry(f"{width}x{height}+{x}+{y}")
 
     def setup_ui(self):
         """Konfiguruje interfejs okna wyników"""
@@ -323,27 +345,20 @@ class ProgressDialog:
 
     def __init__(self, parent, title="Postęp"):
         self.parent = parent
+        self.window = None
         self.setup_window(title)
-
-    def center_window(self, width=350, height=200):
-        self.dialog.update_idletasks()
-        screen_width = self.dialog.winfo_screenwidth()
-        screen_height = self.dialog.winfo_screenheight()
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
-        self.dialog.geometry(f"{width}x{height}+{x}+{y}")
 
     def setup_window(self, title):
         """Konfiguruje okno postępu"""
         self.window = tk.Toplevel(self.parent)
         self.window.title(title)
-        self.window.geometry("300x120")
+        self.window.geometry("350x150")
         self.window.resizable(False, False)
         self.window.transient(self.parent)
         self.window.grab_set()
 
         # Wyśrodkuj okno
-        self.center_window(350, 200)
+        self.center_window(self.window, 350, 150)
 
         # Ramka
         frame = ttk.Frame(self.window, padding="20")
@@ -358,18 +373,33 @@ class ProgressDialog:
         self.progress.pack(fill="x")
         self.progress.start()
 
+    def center_window(self, window, width, height):
+        """Wyśrodkowuje okno na ekranie"""
+        window.update_idletasks()
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        window.geometry(f"{width}x{height}+{x}+{y}")
+
     def update_status(self, status: str):
         """Aktualizuje status"""
-        self.status_label.config(text=status)
-        self.window.update()
+        if self.status_label and self.window:
+            self.status_label.config(text=status)
+            self.window.update()
 
     def close(self):
         """Zamyka okno dialogowe"""
         try:
-            self.progress.stop()
-            self.window.destroy()
-        except:
+            if self.progress:
+                self.progress.stop()
+            if self.window:
+                self.window.destroy()
+        except tk.TclError:
+            # Okno już zostało zniszczone
             pass
+        except Exception as e:
+            print(f"Error closing progress dialog: {e}")
 
 
 # Funkcje pomocnicze dla kompatybilności

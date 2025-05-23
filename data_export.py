@@ -1,9 +1,11 @@
-# data_export.py - Uproszczony eksport danych
+# data_export.py - Fixed Data Export
 import csv
 import json
 from pathlib import Path
 from typing import List
 from tkinter import filedialog, messagebox
+import tkinter as tk
+from tkinter import ttk
 from models import FileInfo
 
 
@@ -203,22 +205,6 @@ WYNIKI OPERACJI:
             return False
 
 
-# Funkcje pomocnicze dla kompatybilności z oryginalnym kodem
-def export_to_csv(files_info: List[FileInfo]):
-    """Funkcja pomocnicza - eksport do CSV"""
-    return DataExporter.export_to_csv(files_info)
-
-
-def export_to_json(files_info: List[FileInfo]):
-    """Funkcja pomocnicza - eksport do JSON"""
-    return DataExporter.export_to_json(files_info)
-
-
-def create_summary_report(files_info: List[FileInfo]):
-    """Funkcja pomocnicza - tworzenie raportu"""
-    return DataExporter.export_summary_report(files_info)
-
-
 class ExportDialog:
     """Dialog wyboru formatu eksportu"""
 
@@ -226,15 +212,12 @@ class ExportDialog:
         self.parent = parent
         self.files_info = files_info
         self.result = None
+        self.dialog = None
+        self.export_format = None
         self.create_dialog()
 
     def create_dialog(self):
         """Tworzy dialog wyboru eksportu"""
-        import tkinter as tk
-        from tkinter import ttk
-
-        self.center_window(350, 200)
-
         # Okno dialogowe
         self.dialog = tk.Toplevel(self.parent)
         self.dialog.title("Eksport Danych")
@@ -244,7 +227,7 @@ class ExportDialog:
         self.dialog.grab_set()
 
         # Wyśrodkuj okno
-        self.dialog.eval('tk::PlaceWindow . center')
+        self.center_window(self.dialog, 350, 200)
 
         # Główna ramka
         main_frame = ttk.Frame(self.dialog, padding="20")
@@ -287,13 +270,14 @@ class ExportDialog:
             command=self.dialog.destroy
         ).pack(side="right")
 
-    def center_window(self, width=350, height=200):
-        self.dialog.update_idletasks()
-        screen_width = self.dialog.winfo_screenwidth()
-        screen_height = self.dialog.winfo_screenheight()
+    def center_window(self, window, width, height):
+        """Wyśrodkowuje okno na ekranie"""
+        window.update_idletasks()
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
         x = (screen_width // 2) - (width // 2)
         y = (screen_height // 2) - (height // 2)
-        self.dialog.geometry(f"{width}x{height}+{x}+{y}")
+        window.geometry(f"{width}x{height}+{x}+{y}")
 
     def export_data(self):
         """Eksportuje dane w wybranym formacie"""
@@ -312,8 +296,22 @@ class ExportDialog:
             self.dialog.destroy()
 
 
+# Funkcje pomocnicze dla kompatybilności z oryginalnym kodem
+def export_to_csv(files_info: List[FileInfo]):
+    """Funkcja pomocnicza - eksport do CSV"""
+    return DataExporter.export_to_csv(files_info)
+
+
+def export_to_json(files_info: List[FileInfo]):
+    """Funkcja pomocnicza - eksport do JSON"""
+    return DataExporter.export_to_json(files_info)
+
+
+def create_summary_report(files_info: List[FileInfo]):
+    """Funkcja pomocnicza - tworzenie raportu"""
+    return DataExporter.export_summary_report(files_info)
+
+
 def show_export_dialog(parent, files_info: List[FileInfo]):
     """Wyświetla dialog eksportu"""
     ExportDialog(parent, files_info)
-
-
