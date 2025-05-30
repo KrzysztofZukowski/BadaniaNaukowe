@@ -1,0 +1,969 @@
+{
+  "extensions": {
+    ".iso": {
+      "C:/Users/marci/Downloads/testy": 15,
+      "C:/Users/marci/Downloads/testy2": 14,
+      "C:/Users/marci/Downloads": 2,
+      "C:\\Users\\marci\\Downloads\\testy": 1,
+      "C:\\Users\\marci\\Downloads\\testy2": 1
+    },
+    ".png": {
+      "C:/Users/marci/Downloads/testy": 45,
+      "C:/Users/marci/Downloads/testy2": 42,
+      "C:/Users/marci/Downloads/Piasty2025": 2,
+      "C:/Users/marci/Downloads": 4,
+      "C:\\Users\\marci\\Downloads\\testy": 4,
+      "C:\\Users\\marci\\Downloads\\testy2": 4
+    },
+    ".csv": {
+      "C:/Users/marci/Downloads/testy": 9,
+      "C:/Users/marci/Downloads/testy2": 9,
+      "C:/Users/marci/Downloads/Piasty2025": 2,
+      "C:/Users/marci/Downloads": 1
+    },
+    ".jpg": {
+      "C:/Users/marci/Downloads/testy": 39,
+      "C:/Users/marci/Downloads/testy2": 38,
+      "C:/Users/marci/Downloads/Piasty2025": 4,
+      "C:/Users/marci/Downloads": 3,
+      "C:\\Users\\marci\\Downloads\\testy": 3,
+      "C:\\Users\\marci\\Downloads\\testy2": 3
+    },
+    ".psd": {
+      "C:/Users/marci/Downloads/testy": 14,
+      "C:/Users/marci/Downloads/testy2": 13,
+      "C:/Users/marci/Downloads": 2,
+      "C:\\Users\\marci\\Downloads\\testy": 1,
+      "C:\\Users\\marci\\Downloads\\testy2": 1
+    },
+    ".svg": {
+      "C:/Users/marci/Downloads/testy": 13,
+      "C:/Users/marci/Downloads/testy2": 13,
+      "C:/Users/marci/Downloads": 1,
+      "C:\\Users\\marci\\Downloads\\testy": 1,
+      "C:\\Users\\marci\\Downloads\\testy2": 1
+    },
+    ".exe": {
+      "C:/Users/marci/Downloads/testy": 10,
+      "C:/Users/marci/Downloads/testy2": 10,
+      "C:/Users/marci/Downloads": 1
+    },
+    ".docx": {
+      "C:/Users/marci/Downloads/testy": 22,
+      "C:/Users/marci/Downloads/testy2": 20,
+      "C:/Users/marci/Downloads": 2,
+      "C:\\Users\\marci\\Downloads\\testy": 2,
+      "C:\\Users\\marci\\Downloads\\testy2": 2
+    },
+    ".ai": {
+      "C:/Users/marci/Downloads/testy": 10,
+      "C:/Users/marci/Downloads/testy2": 10,
+      "C:/Users/marci/Downloads/Piasty2025": 5,
+      "C:/Users/marci/Downloads": 1
+    },
+    ".java": {
+      "C:/Users/marci/Downloads/testy": 9,
+      "C:/Users/marci/Downloads/testy2": 9,
+      "C:/Users/marci/Downloads": 1
+    },
+    ".pdf": {
+      "C:/Users/marci/Downloads/testy": 430,
+      "C:/Users/marci/Downloads/testy2": 344,
+      "C:/Users/marci/Downloads/Piasty2025": 17,
+      "C:/Users/marci/Downloads": 6,
+      "C:\\Users\\marci\\Downloads\\testy2": 94,
+      "C:\\Users\\marci\\Downloads\\testy": 91
+    },
+    ".webp": {
+      "C:/Users/marci/Downloads/testy": 16,
+      "C:/Users/marci/Downloads/testy2": 16,
+      "C:/Users/marci/Downloads": 2
+    },
+    "": {
+      "C:/Users/marci/Downloads/testy": 17,
+      "C:/Users/marci/Downloads/testy2": 17,
+      "C:/Users/marci/Downloads": 2
+    },
+    ".html": {
+      "C:/Users/marci/Downloads/testy": 17,
+      "C:/Users/marci/Downloads/testy2": 17,
+      "C:/Users/marci/Downloads": 2
+    },
+    ".rmd": {
+      "C:/Users/marci/Downloads/testy": 16,
+      "C:/Users/marci/Downloads/testy2": 16,
+      "C:/Users/marci/Downloads": 2
+    },
+    ".r": {
+      "C:/Users/marci/Downloads/testy": 16,
+      "C:/Users/marci/Downloads/testy2": 16,
+      "C:/Users/marci/Downloads": 2
+    },
+    ".xlsx": {
+      "C:/Users/marci/Downloads/testy": 32,
+      "C:/Users/marci/Downloads/testy2": 31,
+      "C:/Users/marci/Downloads/Piasty2025": 1,
+      "C:/Users/marci/Downloads": 3,
+      "C:\\Users\\marci\\Downloads\\testy": 1,
+      "C:\\Users\\marci\\Downloads\\testy2": 1
+    },
+    ".odt": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 8,
+      "C:/Users/marci/Downloads": 1
+    },
+    ".rtf": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 8,
+      "C:/Users/marci/Downloads": 1
+    },
+    ".mp3": {
+      "C:/Users/marci/Downloads/testy": 139,
+      "C:/Users/marci/Downloads/testy2": 137,
+      "C:/Users/marci/Downloads": 16,
+      "C:\\Users\\marci\\Downloads\\testy": 6,
+      "C:\\Users\\marci\\Downloads\\testy2": 6
+    },
+    ".drawio": {
+      "C:/Users/marci/Downloads/testy": 12,
+      "C:/Users/marci/Downloads/testy2": 11,
+      "C:/Users/marci/Downloads": 2,
+      "C:\\Users\\marci\\Downloads\\testy": 1,
+      "C:\\Users\\marci\\Downloads\\testy2": 1
+    },
+    ".mp4": {
+      "C:/Users/marci/Downloads/Piasty2025": 1
+    },
+    ".zip": {
+      "C:/Users/marci/Downloads/Piasty2025": 1,
+      "C:/Users/marci/Downloads/testy2": 6,
+      "C:/Users/marci/Downloads/testy": 7,
+      "C:\\Users\\marci\\Downloads\\testy": 2,
+      "C:\\Users\\marci\\Downloads\\testy2": 2
+    },
+    ".odp": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 7,
+      "C:\\Users\\marci\\Downloads\\testy2": 2,
+      "C:\\Users\\marci\\Downloads\\testy": 1
+    },
+    ".txt": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 5,
+      "C:\\Users\\marci\\Downloads\\testy": 1,
+      "C:\\Users\\marci\\Downloads\\testy2": 1
+    }
+  },
+  "destinations": {
+    "C:/Users/marci/Downloads/testy": 918,
+    "C:/Users/marci/Downloads/testy2": 817,
+    "C:/Users/marci/Downloads/Piasty2025": 33,
+    "C:/Users/marci/Downloads": 57,
+    "C:\\Users\\marci\\Downloads\\testy2": 119,
+    "C:\\Users\\marci\\Downloads\\testy": 115
+  },
+  "patterns": {
+    "odpowiedzi": {
+      "C:/Users/marci/Downloads/testy": 7,
+      "C:/Users/marci/Downloads/testy2": 5
+    },
+    "sieci": {
+      "C:/Users/marci/Downloads/testy": 9,
+      "C:/Users/marci/Downloads/testy2": 6
+    },
+    "full": {
+      "C:/Users/marci/Downloads/testy": 7,
+      "C:/Users/marci/Downloads/testy2": 5
+    },
+    "pudzianpack": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 6
+    },
+    "krzysztof": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "żukowski": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "linia": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "turawa": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "jezioro": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "duze": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "harcerska": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "kier": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "opole": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "dworzec": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "autobusowy": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "bierdzany": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "screenshot": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "2025": {
+      "C:/Users/marci/Downloads/testy": 13,
+      "C:/Users/marci/Downloads/testy2": 8
+    },
+    "wykopobrazapapieza": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "sasiedzi": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "gownowpis": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "wykop": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "infopack": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "wyjazd": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "integracyjno": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "szkoleniowy": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "marcin": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "spólnik": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "formularz": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "testu": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "case": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "szablon": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 5
+    },
+    "baza": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "błędów": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "list": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "lista": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "kolekcje": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "pytania": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "siecikomp": {
+      "C:/Users/marci/Downloads/testy": 52,
+      "C:/Users/marci/Downloads/testy2": 26
+    },
+    "13b": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "smtp": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "13a": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "pop": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "imap": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "dhcp": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "dns": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "adresowanievlsm": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "adresowaniesieci": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "09c": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "arp": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "rarp": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "09b": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "icmpv4": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "09a": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "ipv4": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "08c": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "udp": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "08b": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "tcp": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "08a": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "07b": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "protokolyroutingu": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "07a": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "podstawyroutingu": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "siecibezprzewodowe": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "ethernet": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "04b": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "kontrolabledow": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "04a": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "komunikacjawsieci": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "03c": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "budowafizyczna": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "kable": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "03b": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "przelacznik": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "03a": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "urzadzenia": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "02b": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "modelosi": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "02a": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "topologietypysieci": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "historiainternetu": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "organizacjestandardysieci": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "pustemedia": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "anna": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "wazni": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "awers": {
+      "C:/Users/marci/Downloads/testy": 42,
+      "C:/Users/marci/Downloads/testy2": 21
+    },
+    "wazniacy": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "eygenerowani": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "2222": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "dorota": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "targoni": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "dorotatargoni": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "media": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "poprawka": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "somoal": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "wolo": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "artysci": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "poprawieni": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "brakujace": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "osobki": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "ekipamedia": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "rewers": {
+      "C:/Users/marci/Downloads/testy": 30,
+      "C:/Users/marci/Downloads/testy2": 15
+    },
+    "organizatorzy": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "popr": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "frankleen": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "kincat": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "ekipamediow": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "operatorzy": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "clean": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "orga": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "ekipabackstage": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "wygenerowani": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "tancerze": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "pracownicyuo": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "wygenerowane": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "pracownicy": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "awers2": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "organizator": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "ekipa": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "backstage": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "techniczni": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "wolontariusz": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "organizatorzypiasty": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "uzupelnienia": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "png": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "dla": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "oli": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "ochrona": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "impozycja": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "grupa": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "infos": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "gosc": {
+      "C:/Users/marci/Downloads/testy": 8,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "gastro": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "partnerzy": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "specjalny": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "partner": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "praca": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "prośba": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "realizację": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "praktyki": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "zawodowej": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "adobe": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "after": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "effects": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "2022": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "v22": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "x64": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "multilingual": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "cwicz": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "icmp": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "diagram": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "ping": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "avicii": {
+      "C:/Users/marci/Downloads/testy": 12,
+      "C:/Users/marci/Downloads/testy2": 6
+    },
+    "without": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "you": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "lyrics": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "sandro": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "cavazza": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "hey": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "brother": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "lyric": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "levels": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "wideo": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "waiting": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "for": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "love": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "the": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "nights": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "father": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "told": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "wake": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "official": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "legendadokomponentow": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "lab7zad2": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "zad3lab7": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "chatgpt": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "apr": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "mikro": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "klasy": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "dziedziczenie": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "arraylist": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "wydarzenie": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "collection": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "three": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "different": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "crowd": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "silhouettes": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "palette": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    }
+  },
+  "content_types": {
+    "application/pdf": {
+      "C:/Users/marci/Downloads/testy": 191,
+      "C:/Users/marci/Downloads/testy2": 100
+    },
+    "application/vnd.oasis.opendocument.presentation": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "image/jpeg": {
+      "C:/Users/marci/Downloads/testy": 7,
+      "C:/Users/marci/Downloads/testy2": 4
+    },
+    "image/png": {
+      "C:/Users/marci/Downloads/testy": 9,
+      "C:/Users/marci/Downloads/testy2": 5
+    },
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+      "C:/Users/marci/Downloads/testy": 3,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+      "C:/Users/marci/Downloads/testy": 5,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "text/plain": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    },
+    "application/x-zip-compressed": {
+      "C:/Users/marci/Downloads/testy": 4,
+      "C:/Users/marci/Downloads/testy2": 2
+    },
+    "application/octet-stream": {
+      "C:/Users/marci/Downloads/testy": 6,
+      "C:/Users/marci/Downloads/testy2": 3
+    },
+    "audio/mpeg": {
+      "C:/Users/marci/Downloads/testy": 12,
+      "C:/Users/marci/Downloads/testy2": 6
+    },
+    "image/svg+xml": {
+      "C:/Users/marci/Downloads/testy": 2,
+      "C:/Users/marci/Downloads/testy2": 1
+    }
+  }
+}
