@@ -137,56 +137,7 @@ def main():
         text_widget = tk.Text(capabilities_window, wrap=tk.WORD, padx=10, pady=10)
         text_widget.pack(fill="both", expand=True)
 
-        capabilities_text = """ZAAWANSOWANE MOŻLIWOŚCI SYSTEMU GRUPOWANIA PLIKÓW
-
-ALGORYTMY ANALIZY:
-
-1. WIELOALGORYTMICZNE PODOBIEŃSTWO NAZW:
-   • Sequence Matcher - analiza podobieństwa sekwencji
-   • Jaccard Index - podobieństwo zbiorów słów
-   • Fuzzy Matching - dopasowanie rozmyte z tolerancją błędów
-   • Prefix/Suffix Detection - wykrywanie wspólnych prefiksów i sufiksów
-   • N-gram Analysis - analiza fragmentów tekstu
-
-2. SEMANTYCZNE GRUPOWANIE:
-   • Rozszerzone słowniki synonimów (20+ kategorii)
-   • Automatyczne wykrywanie grup znaczeniowych
-   • Fuzzy semantic matching z progiem 80%
-   • Wielojęzyczne wsparcie (polski/angielski)
-
-3. WYKRYWANIE WZORCÓW STRUKTURALNYCH:
-   • Wzorce numeryczne (sekwencje, daty, wersje)
-   • Wzorce czasowe (ISO, polska notacja, timestamps)
-   • Identyfikatory i numery dokumentów
-   • Analiza długości i struktury nazw
-
-4. GRUPOWANIE HYBRYDOWE:
-   • Fuzja wszystkich algorytmów
-   • Automatyczna optymalizacja progów
-   • Adaptacyjne dopasowanie do typu plików
-   • Automatyczne nazywanie grup
-
-5. ANALIZA PREDYKCYJNA:
-   • Cache podobieństw dla szybkości
-   • Historia przenoszenia plików
-   • Sugerowanie lokalizacji na podstawie analizy
-   • Statystyki efektywności algorytmów
-
-6. ZAAWANSOWANE FUNKCJE:
-   • Real-time filtering i wyszukiwanie
-   • Multi-threaded analysis dla dużych zbiorów
-   • Eksport wyników analizy
-   • Wizualizacja statystyk
-
-KORZYŚCI:
-• 90%+ skuteczność grupowania
-• Automatyczne wykrywanie podobnych plików
-• Automatyczne sugestie organizacji
-• Oszczędność czasu użytkownika
-• Adaptacja do różnych typów nazw plików
-
-Naciśnij 'Rozpocznij Analizę' aby zobaczyć system w akcji!
-"""
+        capabilities_text = """"""
 
         text_widget.insert('1.0', capabilities_text)
         text_widget.config(state='disabled')
@@ -411,8 +362,6 @@ Naciśnij 'Rozpocznij Analizę' aby zobaczyć system w akcji!
                     progress_dialog.update_status("System gotowy!", "Wizualizer załadowany")
                     time.sleep(0.5)
                     progress_dialog.close()
-
-                # Komunikat o funkcjach
 
             else:
                 if progress_dialog:
