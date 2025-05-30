@@ -262,7 +262,6 @@ def main():
             # Pytanie o wizualizację grup z informacjami
             if len(files_info_list) > 1:
                 if USE_ENHANCED_VISUALIZER:
-                    # Oblicz potencjalne grupy dla lepszej informacji - POPRAWIONE
                     potential_groups = 0
                     try:
                         if hasattr(category_analyzer, 'smart_group_files_by_name'):
@@ -274,20 +273,6 @@ def main():
                         print(f"Nie udało się obliczyć grup: {group_error}")
                         potential_groups = "kilka"
 
-                    message = (
-                        "ZAAWANSOWANA WIZUALIZACJA",
-                        f"GOTOWE DO ANALIZY!\n\n"
-                        f"Wykryto potencjalnie {potential_groups} zaawansowanych grup\n"
-                        f"Czy chcesz uruchomić zaawansowaną wizualizację?"
-                    )
-                else:
-                    message = (
-                        "Podstawowa wizualizacja grup",
-                        "Czy chcesz wyświetlić podstawową wizualizację grup plików?"
-                    )
-
-                response = messagebox.askyesno(message[0], message[1])
-                if response:
                     show_group_visualizer()
 
         except Exception as e:
