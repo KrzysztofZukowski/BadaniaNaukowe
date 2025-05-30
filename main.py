@@ -168,56 +168,21 @@ def main():
                                           f"Wykrywanie wzorców w {len(files)} plikach")
 
         try:
-            # Sprawdź czy istnieją sugerowane lokalizacje
-            suggested_destinations = {}
-            suggestions_count = 0
+
 
             if progress_dialog:
                 progress_dialog.update_status("Analizuję historię...",
                                               "Wykorzystuję dane historyczne")
 
-            for file_path in files:
-                suggested = category_analyzer.get_suggested_destination(file_path)
-                if suggested:
-                    suggestions_count += 1
-                    if suggested not in suggested_destinations:
-                        suggested_destinations[suggested] = []
-                    suggested_destinations[suggested].append(os.path.basename(file_path))
 
             # Zamknij okno postępu
             if progress_dialog:
-                progress_dialog.update_status("Analiza zakończona!",
-                                              f"Znaleziono {suggestions_count} automatycznych sugestii")
+                progress_dialog.update_status("Analiza zakończona!",)
                 time.sleep(1)
                 progress_dialog.close()
 
-            # Pokaż statystyki
-            if suggestions_count > 0:
-                efficiency = (suggestions_count / len(files)) * 100
+            destination = select_destination()
 
-
-            # Jeśli mamy sugestie, zapytaj użytkownika
-            destination = None
-            if suggested_destinations and len(suggested_destinations) == 1:
-                # Jeśli system ma tylko jedną sugestię dla wszystkich plików
-                suggested = list(suggested_destinations.keys())[0]
-                files_list = "\n".join(suggested_destinations[suggested][:5])
-                if len(suggested_destinations[suggested]) > 5:
-                    files_list += f"\n... i {len(suggested_destinations[suggested]) - 5} więcej"
-
-                response = messagebox.askyesno(
-                    "Sugestia systemu",
-                    f"REKOMENDACJA:\n\n"
-                    f"Na podstawie analizy wzorców i historii, system sugeruje lokalizację:\n"
-                    f"{suggested}\n\n"
-                    f"Pliki do przeniesienia:\n{files_list}\n\n"
-                    f"Pewność: {efficiency:.0f}%\n\n"
-                    f"Czy chcesz użyć sugestii systemu?"
-                )
-                if response:
-                    destination = suggested
-
-            # Jeśli nie wybrano sugerowanej lokalizacji, pozwól użytkownikowi wybrać folder
             if not destination:
                 destination = select_destination()
                 if not destination:
