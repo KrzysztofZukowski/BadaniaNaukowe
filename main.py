@@ -355,13 +355,6 @@ Naciśnij 'Rozpocznij Analizę' aby zobaczyć system w akcji!
                         "ZAAWANSOWANA WIZUALIZACJA",
                         f"GOTOWE DO ANALIZY!\n\n"
                         f"Wykryto potencjalnie {potential_groups} zaawansowanych grup\n"
-                        f"Dostępne funkcje:\n\n"
-                        f"• Multi-algorytmiczne grupowanie podobieństwa\n"
-                        f"• Semantyczne grupy znaczeniowe\n"
-                        f"• Hybrydowe grupowanie (fuzja algorytmów)\n"
-                        f"• Zaawansowana analiza wzorców\n"
-                        f"• Real-time wyszukiwanie i filtrowanie\n"
-                        f"• Szczegółowe statystyki\n\n"
                         f"Czy chcesz uruchomić zaawansowaną wizualizację?"
                     )
                 else:
@@ -420,19 +413,7 @@ Naciśnij 'Rozpocznij Analizę' aby zobaczyć system w akcji!
                     progress_dialog.close()
 
                 # Komunikat o funkcjach
-                messagebox.showinfo(
-                    "Wizualizer aktywny",
-                    "ZAAWANSOWANY WIZUALIZER URUCHOMIONY!\n\n"
-                    "Funkcje:\n"
-                    "• Multi-algorytmiczne podobieństwo nazw\n"
-                    "• Semantyczne grupy znaczeniowe\n"
-                    "• Grupowanie hybrydowe (fuzja metod)\n"
-                    "• Zaawansowane statystyki algorytmów\n"
-                    "• Real-time wyszukiwanie grup\n"
-                    "• Szczegółowa analiza wzorców\n\n"
-                    "TIP: Wybierz 'Inteligentne grupy' \n"
-                    "aby zobaczyć system w akcji!"
-                )
+
             else:
                 if progress_dialog:
                     progress_dialog.close()
