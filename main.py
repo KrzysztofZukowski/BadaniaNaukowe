@@ -194,14 +194,7 @@ def main():
             # Pokaż statystyki
             if suggestions_count > 0:
                 efficiency = (suggestions_count / len(files)) * 100
-                message = (f"ANALIZA ZAKOŃCZONA!\n\n"
-                           f"Efektywność: {efficiency:.1f}%\n"
-                           f"Automatyczne sugestie: {suggestions_count}/{len(files)}\n"
-                           f"Wykryte wzorce: {len(suggested_destinations)} lokalizacji\n\n"
-                           f"System wykorzystał historię {len(category_analyzer.transfer_history.get('extensions', {}))} rozszerzeń "
-                           f"i {len(category_analyzer.transfer_history.get('patterns', {}))} wzorców nazw.")
 
-                messagebox.showinfo("Analiza", message)
 
             # Jeśli mamy sugestie, zapytaj użytkownika
             destination = None
@@ -262,27 +255,6 @@ def main():
 
             print(f"Sukces: {success_count}, Nieudane: {failed_count}")
 
-            # Pokaż wyniki z statistykami
-            if failed_count > 0:
-                messagebox.showwarning(
-                    "Ostrzeżenie",
-                    f"WYNIKI TRANSFERU:\n\n"
-                    f"Przeniesiono: {success_count}/{len(files_info_list)}\n"
-                    f"Nieudane: {failed_count}\n\n"
-                    f"Czas analizy: {analysis_stats['last_analysis_time']:.1f}s\n"
-                    f"Cache Size: {analysis_stats['similarity_calculations']} calculations"
-                )
-            else:
-                messagebox.showinfo(
-                    "Sukces",
-                    f"TRANSFER PLIKÓW ZAKOŃCZONY!\n\n"
-                    f"Wszystkie pliki ({success_count}) zostały pomyślnie przeniesione\n"
-                    f"Lokalizacja: {destination}\n\n"
-                    f"Statystyki:\n"
-                    f"Czas analizy: {analysis_stats['last_analysis_time']:.1f}s\n"
-                    f"Cache podobieństw: {analysis_stats['similarity_calculations']}\n"
-                    f"Łącznie przeanalizowano: {analysis_stats['files_analyzed']} plików"
-                )
 
             # Wyświetlenie tabeli z informacjami o plikach
             show_files_table(files_info_list, category_analyzer)
