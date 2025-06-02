@@ -1,3 +1,4 @@
+# main.py - NAPRAWIONA wersja z prostymi kategoriami dynamicznymi
 import tkinter as tk
 from tkinter import messagebox, ttk
 import os
@@ -11,36 +12,44 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.append(current_dir)
 
-# Importujemy funkcje bezpośrednio
-from file_operations import select_files, select_destination, move_files, category_analyzer
-from gui_components import create_main_window, setup_ui, show_files_table
+# Importujemy funkcje - sprawdź czy są naprawione pliki, jeśli nie - użyj oryginalnych
+try:
+    # Próbuj użyć uproszczonego analizatora
+    print("🔄 Próbuję załadować uproszczony analizator kategorii...")
+    # Sprawdź czy istnieje nowa wersja category_analyzer.py z dynamicznymi kategoriami
+    exec(open('category_analyzer.py').read())  # To nie zadziała, ale sprawdzi czy plik istnieje
+    from category_analyzer import CategoryAnalyzer
+
+    category_analyzer = CategoryAnalyzer()
+    print("✅ Używam analizatora kategorii z dynamicznymi kategoriami")
+    USE_DYNAMIC_ANALYZER = True
+except:
+    try:
+        from category_analyzer import CategoryAnalyzer
+
+        category_analyzer = CategoryAnalyzer()
+        print("⚠️ Używam standardowego analizatora kategorii")
+        USE_DYNAMIC_ANALYZER = False
+    except ImportError:
+        print("❌ Nie mogę załadować analizatora kategorii!")
+        sys.exit(1)
+
+from file_operations import select_files, select_destination, move_files
+from gui_components import create_main_window, show_files_table
 from auto_folder_organizer import AutoFolderOrganizer
 
-# Próbujemy zaimportować rozszerzony wizualizer, jeśli nie ma - używamy podstawowego
+# Próbujemy zaimportować rozszerzony wizualizer
 try:
     from enhanced_file_group_visualizer import EnhancedFileGroupVisualizer
 
-    print("Używam rozszerzonego wizualizera grup z zaawansowanymi funkcjami")
     USE_ENHANCED_VISUALIZER = True
 except ImportError:
-    print("Nie mogę zaimportować rozszerzonego wizualizera, używam podstawowego")
     try:
         from file_group_visualizer import FileGroupVisualizer
 
         USE_ENHANCED_VISUALIZER = False
     except ImportError:
-        print("Błąd: Nie można zaimportować żadnego wizualizera")
         USE_ENHANCED_VISUALIZER = False
-
-# Sprawdź czy używamy rozszerzonego analizatora kategorii
-try:
-    from enhanced_category_analyzer import EnhancedCategoryAnalyzer
-
-    print("Używam rozszerzonego analizatora kategorii z zaawansowanym grupowaniem")
-    USE_ENHANCED_ANALYZER = True
-except ImportError:
-    print("Rozszerzony analizator niedostępny, używam podstawowego")
-    USE_ENHANCED_ANALYZER = False
 
 
 class ProgressDialog:
@@ -294,9 +303,10 @@ class AutoOrganizeDialog:
 
 
 def main():
-    """Główna funkcja programu z automatycznym organizowaniem"""
+    """Główna funkcja programu"""
     # Utworzenie głównego okna
     root = create_main_window()
+    root.title("🎯 System Organizacji Plików z Dynamicznymi Kategoriami")
 
     # Konfiguracja stylu
     style = ttk.Style()
@@ -307,19 +317,13 @@ def main():
 
     # Zmienne globalne
     files_info_list = []
-    analysis_stats = {
-        'last_analysis_time': 0,
-        'total_groups_created': 0,
-        'files_analyzed': 0,
-        'similarity_calculations': 0
-    }
 
     # Inicjalizacja organizatora folderów
     auto_organizer = AutoFolderOrganizer(category_analyzer)
 
     def start_moving_process():
-        """Standardowy proces przenoszenia (bez automatycznego organizowania)"""
-        nonlocal files_info_list, analysis_stats
+        """Standardowy proces przenoszenia plików"""
+        nonlocal files_info_list
 
         files = select_files()
         if not files:
@@ -332,7 +336,7 @@ def main():
         if len(files) > 10:
             progress_dialog = ProgressDialog(root, "Analiza plików")
             progress_dialog.update_status("Analizuję nazwy plików...",
-                                          f"Wykrywanie wzorców w {len(files)} plikach")
+                                          f"Wykrywanie dynamicznych wzorców w {len(files)} plikach")
 
         try:
             if progress_dialog:
@@ -350,14 +354,21 @@ def main():
 
             files_info_list = move_files(files, destination)
 
-            # Aktualizuj statystyki
-            analysis_stats['last_analysis_time'] = time.time() - start_time
-            analysis_stats['files_analyzed'] += len(files_info_list)
-
-            print(f"Zakończono przenoszenie plików. Otrzymano {len(files_info_list)} informacji o plikach.")
+            analysis_time = time.time() - start_time
+            print(
+                f"Zakończono przenoszenie plików w {analysis_time:.2f} sekund. Otrzymano {len(files_info_list)} informacji o plikach.")
 
             # Wyświetlenie tabeli z informacjami o plikach
             show_files_table(files_info_list, category_analyzer)
+
+            # Wyświetl statystyki dynamicznych wzorców (jeśli dostępne)
+            if USE_DYNAMIC_ANALYZER and hasattr(category_analyzer, 'get_dynamic_patterns_stats'):
+                try:
+                    stats = category_analyzer.get_dynamic_patterns_stats()
+                    print(f"\n📊 STATYSTYKI DYNAMICZNYCH WZORCÓW:")
+                    print(stats)
+                except Exception as e:
+                    print(f"Błąd generowania statystyk wzorców: {e}")
 
             # Pytanie o wizualizację grup
             if len(files_info_list) > 1:
@@ -371,8 +382,8 @@ def main():
             messagebox.showerror("Błąd", f"Wystąpił błąd podczas przenoszenia plików:\n{str(e)}")
 
     def start_auto_organize_process():
-        """Nowy proces z automatycznym organizowaniem folderów - NAPRAWIONA WERSJA"""
-        nonlocal files_info_list, analysis_stats
+        """Proces z automatycznym organizowaniem folderów"""
+        nonlocal files_info_list
 
         files = select_files()
         if not files:
@@ -386,13 +397,11 @@ def main():
         progress_dialog.update_status("Analizuję pliki...", "Przygotowywanie do organizowania")
 
         try:
-            # WSZYSTKIE IMPORTY NA POCZĄTKU
             from models import FileInfo
             from datetime import datetime
             from file_size_reader import FileSizeReader
             from file_analyzer import get_mime_type, get_file_signature, extract_keywords, analyze_headers
 
-            # Pomocnicza funkcja formatowania daty
             def safe_format_datetime(timestamp):
                 try:
                     return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
@@ -404,14 +413,12 @@ def main():
 
             for i, file_path in enumerate(files):
                 try:
-                    # Aktualizuj progress dialog
                     file_name = os.path.basename(file_path)
                     progress_dialog.update_status(
                         f"Analizuję: {file_name}",
                         f"Plik {i + 1} z {len(files)}"
                     )
 
-                    # Sprawdź czy plik istnieje
                     if not os.path.exists(file_path):
                         print(f"Plik nie istnieje: {file_path}")
                         continue
@@ -489,7 +496,6 @@ def main():
 
                 except Exception as e:
                     print(f"❌ Błąd analizy pliku {file_path}: {e}")
-                    traceback.print_exc()
                     continue
 
             progress_dialog.close()
@@ -530,9 +536,8 @@ def main():
                 file_mapping, dry_run, use_existing
             )
 
-            # Aktualizuj statystyki
+            # Aktualizuj zmienne globalne
             files_info_list = temp_files_info
-            analysis_stats['files_analyzed'] += len(files_info_list)
 
             # Pokaż wyniki
             show_organize_results(results, dry_run)
@@ -640,6 +645,42 @@ def main():
             print(f"BŁĄD podczas tworzenia wizualizera grup: {e}")
             messagebox.showerror("Błąd Wizualizera", f"Wystąpił błąd podczas tworzenia wizualizera grup:\n{str(e)}")
 
+    def show_dynamic_patterns():
+        """Wyświetla okno z dynamicznymi wzorcami"""
+        if not USE_DYNAMIC_ANALYZER or not hasattr(category_analyzer, 'get_dynamic_patterns_stats'):
+            messagebox.showinfo("Informacja", "Dynamiczne wzorce niedostępne w tej wersji analizatora.")
+            return
+
+        try:
+            stats = category_analyzer.get_dynamic_patterns_stats()
+
+            # Utwórz okno
+            patterns_window = tk.Toplevel(root)
+            patterns_window.title("📊 Dynamiczne Wzorce")
+            patterns_window.geometry("600x400")
+
+            main_frame = ttk.Frame(patterns_window, padding="10")
+            main_frame.pack(fill="both", expand=True)
+
+            title_label = ttk.Label(main_frame, text="📊 DYNAMICZNE WZORCE NAZW",
+                                    font=("Arial", 12, "bold"))
+            title_label.pack(pady=(0, 10))
+
+            # Tekst ze statystykami
+            stats_text = tk.Text(main_frame, wrap=tk.WORD, font=("Courier", 10))
+            scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=stats_text.yview)
+            stats_text.configure(yscrollcommand=scrollbar.set)
+
+            scrollbar.pack(side="right", fill="y")
+            stats_text.pack(fill="both", expand=True)
+
+            stats_text.insert('1.0', stats)
+
+            ttk.Button(main_frame, text="Zamknij", command=patterns_window.destroy).pack(pady=(10, 0))
+
+        except Exception as e:
+            messagebox.showerror("Błąd", f"Błąd wyświetlania wzorców: {e}")
+
     def setup_enhanced_ui_with_auto_organize(root):
         """Konfiguruje rozszerzony interfejs z automatycznym organizowaniem"""
         root.configure(bg='#f5f5f5')
@@ -649,10 +690,17 @@ def main():
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         # Banner tytułowy
-        title = "🗂️ SYSTEM ORGANIZACJI PLIKÓW Z AUTO-FOLDERAMI"
+        title = "🎯 SYSTEM ORGANIZACJI PLIKÓW Z DYNAMICZNYMI KATEGORIAMI"
         title_label = ttk.Label(main_frame, text=title,
                                 foreground="darkblue", font=("Arial", 16, "bold"))
         title_label.pack(pady=(0, 10))
+
+        # Status analizatora
+        status_text = "✅ Dynamiczne kategorie AKTYWNE" if USE_DYNAMIC_ANALYZER else "⚠️ Standardowe kategorie"
+        status_label = ttk.Label(main_frame, text=status_text,
+                                 foreground="green" if USE_DYNAMIC_ANALYZER else "orange",
+                                 font=("Arial", 10, "bold"))
+        status_label.pack(pady=(0, 20))
 
         # Ramka dla głównych przycisków
         buttons_frame = ttk.LabelFrame(main_frame, text="Główne funkcje", padding="15")
@@ -661,7 +709,7 @@ def main():
         # Przycisk automatycznego organizowania - GŁÓWNY
         auto_organize_button = ttk.Button(
             buttons_frame,
-            text="🎯 Automatyczne Organizowanie",
+            text="🗂️ Automatyczne Organizowanie",
             command=start_auto_organize_process,
             style='Accent.TButton'
         )
@@ -687,29 +735,38 @@ def main():
         )
         visualize_button.pack(side="left", fill="x", expand=True, padx=(0, 5))
 
+        # Przycisk wzorców dynamicznych
+        if USE_DYNAMIC_ANALYZER:
+            patterns_button = ttk.Button(
+                buttons_row,
+                text="📈 Wzorce Dynamiczne",
+                command=show_dynamic_patterns
+            )
+            patterns_button.pack(side="left", fill="x", expand=True, padx=(5, 0))
+
         # Informacje o aplikacji
         info_frame = ttk.LabelFrame(main_frame, text="Informacje", padding="15")
         info_frame.pack(fill="both", expand=True)
 
-        info_text = """🎯 AUTOMATYCZNE ORGANIZOWANIE:
-• Inteligentna hierarchia folderów: Typ → Data → Tematyka
-• 4 tryby organizacji do wyboru
-• Podgląd struktury przed wykonaniem
-• Tryb symulacji bezpiecznego testowania
+        info_text = """🎯 NOWE: DYNAMICZNE KATEGORIE
+• Automatyczne wykrywanie wzorców w nazwach plików
+• Inteligentne grupowanie podobnych plików
+• Uczenie się z historii nazw plików
+• Brak predefiniowanych błędnych kategorii
 
-📁 STANDARDOWE PRZENOSZENIE:
-• Klasyczne przenoszenie do wybranego folderu
-• Pełna analiza i kategoryzacja plików
-• Historia przenoszenia dla lepszych predykcji
+📁 PRZYKŁADY DZIAŁANIA:
+• "BudowaFizyczna_Sieci.pdf" → Seria: Budowa (nie fizyka!)
+• "Umowa_Klient_2024.pdf" → Seria: Umowa
+• "Backup_System_03.zip" → Grupa: Backup
 
 🔧 DOSTĘPNE FUNKCJE:"""
 
-        if USE_ENHANCED_ANALYZER:
-            info_text += "\n✅ Zaawansowany analizator kategorii"
+        if USE_DYNAMIC_ANALYZER:
+            info_text += "\n✅ Analizator z dynamicznymi kategoriami"
         if USE_ENHANCED_VISUALIZER:
             info_text += "\n✅ Rozszerzona wizualizacja grup"
 
-        info_text += "\n\nProgram automatycznie tworzy logiczną strukturę folderów!"
+        info_text += "\n\n🚀 System uczy się z nazw plików i tworzy sensowne kategorie!"
 
         info_label = ttk.Label(info_frame, text=info_text, justify=tk.LEFT,
                                font=("Arial", 9), wraplength=500)
@@ -738,7 +795,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        print("🗂️ Uruchamianie systemu organizacji plików z automatycznym tworzeniem folderów...")
+        print("🎯 Uruchamianie systemu organizacji plików z dynamicznymi kategoriami...")
         main()
     except Exception as e:
         print(f"Wystąpił krytyczny błąd: {e}")

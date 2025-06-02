@@ -1,4 +1,4 @@
-# auto_folder_organizer.py - Automatyczne organizowanie plików w hierarchicznej strukturze folderów
+# auto_folder_organizer.py - NAPRAWIONA wersja z uproszczonymi kategoriami
 import os
 import shutil
 import re
@@ -14,7 +14,7 @@ class AutoFolderOrganizer:
     def __init__(self, category_analyzer):
         self.category_analyzer = category_analyzer
 
-        # Mapowanie kategorii rozszerzeń na nazwy folderów głównych
+        # UPROSZCZONE mapowanie kategorii - tylko rozszerzenia
         self.main_folder_mapping = {
             'dokumenty_tekstowe': '📄 Dokumenty',
             'dokumenty_pdf': '📄 Dokumenty',
@@ -43,57 +43,18 @@ class AutoFolderOrganizer:
             'nieznana': '❓ Inne'
         }
 
-        # Mapowanie kategorii tematycznych na nazwy podfolderów
-        self.theme_folder_mapping = {
-            'faktura': 'Faktury i Rachunki',
-            'cv_resume': 'CV i Życiorysy',
-            'raport': 'Raporty',
+        # NOWE: Mapowanie dynamicznych kategorii
+        self.dynamic_folder_mapping = {
             'backup': 'Kopie Zapasowe',
-            'notatka': 'Notatki',
-            'projekt': 'Projekty',
-            'dokumentacja': 'Dokumentacja',
-            'konfiguracja': 'Konfiguracja',
-            'prezentacja': 'Prezentacje',
-            'umowa': 'Umowy i Kontrakty',
-            'oferta': 'Oferty',
-            'ankieta': 'Ankiety i Badania',
-            'zdjęcia': 'Zdjęcia',
-            'muzyka': 'Muzyka',
-            'wideo': 'Filmy',
-            'szkic': 'Szkice i Drafty',
-            'książka': 'Książki',
-            'list': 'Korespondencja',
-            'prywatne': 'Prywatne',
-            'praca': 'Praca',
-            'szkoła': 'Edukacja',
-            'wydarzenie': 'Wydarzenia',
-            'matematyka': 'Matematyka',
-            'fizyka': 'Fizyka',
-            'chemia': 'Chemia',
-            'biologia': 'Biologia',
-            'historia': 'Historia',
-            'geografia': 'Geografia',
-            'języki': 'Języki',
-            'informatyka': 'Informatyka'
+            'config': 'Konfiguracja',
+            'temp': 'Pliki Tymczasowe',
+            'test': 'Pliki Testowe'
         }
 
     def generate_folder_structure(self, base_path, files_info_list, organization_mode="full"):
         """
         Generuje strukturę folderów na podstawie listy plików
-
-        Args:
-            base_path: Ścieżka bazowa gdzie mają być tworzone foldery
-            files_info_list: Lista obiektów FileInfo
-            organization_mode:
-                - "simple": tylko typ pliku
-                - "by_date": typ pliku + data
-                - "full": typ pliku + data + tematyka (domyślnie)
-                - "theme_first": tematyka + typ pliku + data
-
-        Returns:
-            dict: Słownik mapujący ścieżki źródłowe na ścieżki docelowe
         """
-
         print(f"\n=== GENEROWANIE STRUKTURY FOLDERÓW ===")
         print(f"Tryb organizacji: {organization_mode}")
         print(f"Ścieżka bazowa: {base_path}")
@@ -135,53 +96,115 @@ class AutoFolderOrganizer:
 
         return file_mapping
 
-    def _generate_file_path(self, base_path, file_info, organization_mode):
-        """Generuje pełną ścieżkę dla pojedynczego pliku"""
+    def _sanitize_folder_name(self, name):
+        """Sanityzuje nazwę folderu dla Windows - usuwa niedozwolone znaki"""
+        if not name:
+            return "Inne"
 
+        # Niedozwolone znaki w Windows: < > : " | ? * /  oraz znaki kontrolne
+        forbidden_chars = '<>:"|?*/'
+
+        # Zastąp niedozwolone znaki
+        sanitized = name
+        for char in forbidden_chars:
+            sanitized = sanitized.replace(char, ' ')
+
+        # Usuń podwójne spacje
+        while '  ' in sanitized:
+            sanitized = sanitized.replace('  ', ' ')
+
+        # Usuń spacje z początku i końca
+        sanitized = sanitized.strip()
+
+        # Sprawdź długość (Windows ma limit ~255 znaków, ale bezpieczniej 100)
+        if len(sanitized) > 100:
+            sanitized = sanitized[:100].strip()
+
+        # Nie może być puste po sanityzacji
+        if not sanitized:
+            sanitized = "Inne"
+
+        # Nie może kończyć się kropką (Windows)
+        if sanitized.endswith('.'):
+            sanitized = sanitized.rstrip('.').strip()
+            if not sanitized:
+                sanitized = "Inne"
+
+        return sanitized
+
+    def _generate_file_path(self, base_path, file_info, organization_mode):
+        """Generuje pełną ścieżkę dla pojedynczego pliku - NAPRAWIONA wersja dla Windows"""
         path_components = [base_path]
 
         if organization_mode == "simple":
             # Tylko typ pliku
-            main_folder = self._get_main_folder(file_info)
+            main_folder = self._sanitize_folder_name(self._get_main_folder(file_info))
             path_components.append(main_folder)
 
         elif organization_mode == "by_date":
             # Typ pliku + data
-            main_folder = self._get_main_folder(file_info)
-            date_folder = self._get_date_folder(file_info)
+            main_folder = self._sanitize_folder_name(self._get_main_folder(file_info))
+            date_folder = self._sanitize_folder_name(self._get_date_folder(file_info))
             path_components.extend([main_folder, date_folder])
 
         elif organization_mode == "full":
-            # Typ pliku + data + tematyka
-            main_folder = self._get_main_folder(file_info)
-            date_folder = self._get_date_folder(file_info)
-            theme_folder = self._get_theme_folder(file_info)
+            # Typ pliku + data + dynamiczna kategoria
+            main_folder = self._sanitize_folder_name(self._get_main_folder(file_info))
+            date_folder = self._sanitize_folder_name(self._get_date_folder(file_info))
+            dynamic_folder = self._get_dynamic_folder(file_info)
+            if dynamic_folder:
+                dynamic_folder = self._sanitize_folder_name(dynamic_folder)
 
             path_components.append(main_folder)
             if date_folder:
                 path_components.append(date_folder)
-            if theme_folder:
-                path_components.append(theme_folder)
+            if dynamic_folder:
+                path_components.append(dynamic_folder)
 
         elif organization_mode == "theme_first":
-            # Tematyka + typ pliku + data
-            theme_folder = self._get_theme_folder(file_info)
-            main_folder = self._get_main_folder(file_info)
-            date_folder = self._get_date_folder(file_info)
+            # Dynamiczna kategoria + typ pliku + data
+            dynamic_folder = self._get_dynamic_folder(file_info)
+            if dynamic_folder:
+                dynamic_folder = self._sanitize_folder_name(dynamic_folder)
+            main_folder = self._sanitize_folder_name(self._get_main_folder(file_info))
+            date_folder = self._sanitize_folder_name(self._get_date_folder(file_info))
 
-            if theme_folder:
-                path_components.append(theme_folder)
+            if dynamic_folder:
+                path_components.append(dynamic_folder)
             path_components.append(main_folder)
             if date_folder:
                 path_components.append(date_folder)
 
-        # Utwórz ścieżkę folderu
+        # Utwórz ścieżkę folderu - używaj os.path.join dla właściwych separatorów
         folder_path = os.path.join(*path_components)
 
-        # Dodaj nazwę pliku
-        file_path = os.path.join(folder_path, f"{file_info.name}{file_info.extension}")
+        # Dodaj nazwę pliku - sanityzuj też nazwę pliku
+        safe_filename = self._sanitize_filename(f"{file_info.name}{file_info.extension}")
+        file_path = os.path.join(folder_path, safe_filename)
 
         return file_path
+
+    def _sanitize_filename(self, filename):
+        """Sanityzuje nazwę pliku dla Windows"""
+        if not filename:
+            return "plik.txt"
+
+        # Niedozwolone znaki w nazwach plików Windows
+        forbidden_chars = '<>:"|?*'
+
+        sanitized = filename
+        for char in forbidden_chars:
+            sanitized = sanitized.replace(char, '_')
+
+        # Nie może kończyć się spacją ani kropką
+        sanitized = sanitized.rstrip(' .')
+
+        # Sprawdź długość
+        if len(sanitized) > 200:  # Bezpieczny limit
+            name, ext = os.path.splitext(sanitized)
+            sanitized = name[:200 - len(ext)] + ext
+
+        return sanitized if sanitized else "plik.txt"
 
     def _get_main_folder(self, file_info):
         """Zwraca nazwę głównego folderu na podstawie typu pliku"""
@@ -222,52 +245,43 @@ class AutoFolderOrganizer:
 
         return date_mapping.get(date_category, 'Data nieznana')
 
-    def _get_theme_folder(self, file_info):
-        """Zwraca nazwę folderu tematycznego"""
-
-        # Sprawdź kategorie z nazwy pliku
+    def _get_dynamic_folder(self, file_info):
+        """NOWA: Zwraca nazwę folderu na podstawie dynamicznych kategorii - Windows compatible"""
+        # Sprawdź najpierw proste wzorce
         if hasattr(file_info, 'category_name') and file_info.category_name:
             for category in file_info.category_name:
-                if category in self.theme_folder_mapping:
-                    return self.theme_folder_mapping[category]
+                if category in self.dynamic_folder_mapping:
+                    return self.dynamic_folder_mapping[category]
 
-        # Sprawdź kategorie przedmiotów (szkolne)
-        if hasattr(file_info, 'subject_categories') and file_info.subject_categories:
-            for subject in file_info.subject_categories:
-                if subject in self.theme_folder_mapping:
-                    return f"Edukacja/{self.theme_folder_mapping[subject]}"
+                # Sprawdź dynamiczne kategorie - BEZ DWUKROPKA dla Windows!
+                if category.startswith('grupa_'):
+                    group_name = category.replace('grupa_', '').title()
+                    return f"Grupa {group_name}"  # Usunięto dwukropek
+                elif category.startswith('seria_'):
+                    series_name = category.replace('seria_', '').title()
+                    return f"Seria {series_name}"  # Usunięto dwukropek
+                elif category.startswith('temat_'):
+                    theme_name = category.replace('temat_', '').title()
+                    return f"Temat {theme_name}"  # Usunięto dwukropek
+                elif category.startswith('typ_'):
+                    type_name = category.replace('typ_', '').title()
+                    return f"Typ {type_name}"  # Usunięto dwukropek
 
         # Sprawdź wzorce czasowe
         if hasattr(file_info, 'time_pattern_categories') and file_info.time_pattern_categories:
-            if 'dzienne' in file_info.time_pattern_categories:
-                return "Pliki dzienne"
-            elif 'miesięczne' in file_info.time_pattern_categories:
-                return "Pliki miesięczne"
-            elif 'roczne' in file_info.time_pattern_categories:
-                return "Pliki roczne"
+            if 'dzienny' in file_info.time_pattern_categories:
+                return "Pliki Dzienne"
+            elif 'miesięczny' in file_info.time_pattern_categories:
+                return "Pliki Miesięczne"
+            elif 'roczny' in file_info.time_pattern_categories:
+                return "Pliki Roczne"
 
-        # Sprawdź czy nazwa zawiera ważne słowa kluczowe
-        if hasattr(file_info, 'keywords') and file_info.keywords:
-            keywords_lower = file_info.keywords.lower()
-            for theme, folder_name in self.theme_folder_mapping.items():
-                if theme in keywords_lower:
-                    return folder_name
-
-        return None  # Brak konkretnej tematyki
+        return None  # Brak dynamicznej kategorii
 
     def create_folders_and_move_files(self, file_mapping, dry_run=False, use_existing_structure=True):
         """
         Tworzy foldery i przenosi pliki zgodnie z mapowaniem
-
-        Args:
-            file_mapping: Słownik {source_path: target_path}
-            dry_run: Jeśli True, tylko symuluje bez rzeczywistego przenoszenia
-            use_existing_structure: Jeśli True, używa istniejących folderów gdy to możliwe
-
-        Returns:
-            dict: Raport z wynikami operacji
         """
-
         print(f"\n=== {'SYMULACJA' if dry_run else 'WYKONANIE'} PRZENOSZENIA ===")
         print(f"Używanie istniejącej struktury: {'TAK' if use_existing_structure else 'NIE'}")
 
@@ -306,7 +320,6 @@ class AutoFolderOrganizer:
 
                 # Utwórz folder docelowy
                 target_dir = os.path.dirname(target_path)
-
                 folder_existed = os.path.exists(target_dir)
 
                 if not dry_run:
@@ -374,7 +387,6 @@ class AutoFolderOrganizer:
 
     def analyze_folder_structure(self, files_info_list, organization_mode="full"):
         """Analizuje jak będzie wyglądać struktura folderów bez tworzenia"""
-
         folder_preview = defaultdict(list)
 
         for file_info in files_info_list:
@@ -390,11 +402,10 @@ class AutoFolderOrganizer:
 
     def _analyze_existing_structure(self, file_mapping):
         """Analizuje istniejącą strukturę folderów w lokalizacji docelowej"""
-
         existing_structure = {
             'main_folders': {},  # typ_pliku -> lista_istniejących_folderów
             'date_folders': {},  # rok -> lista_miesięcy
-            'theme_folders': {},  # tematyka -> lista_folderów
+            'dynamic_folders': {},  # kategoria_dynamiczna -> lista_folderów
         }
 
         # Zbierz wszystkie unikalne ścieżki bazowe
@@ -432,7 +443,6 @@ class AutoFolderOrganizer:
 
     def _scan_date_folders(self, main_folder_path, existing_structure, folder_type):
         """Skanuje foldery z datami w głównym folderze typu pliku"""
-
         try:
             for item in os.listdir(main_folder_path):
                 item_path = os.path.join(main_folder_path, item)
@@ -452,38 +462,36 @@ class AutoFolderOrganizer:
                                     if " - " in month_item and month_item[:2].isdigit():
                                         existing_structure['date_folders'][year_folder].append(month_item)
 
-                                        # Znajdź foldery tematyczne w miesiącu
-                                        self._scan_theme_folders(month_path, existing_structure)
+                                        # Znajdź foldery dynamiczne w miesiącu
+                                        self._scan_dynamic_folders(month_path, existing_structure)
                         except OSError:
                             pass
 
                     # Sprawdź inne możliwe foldery daty
                     elif item in ['Najnowsze', 'Data nieznana', 'Ostatni rok', 'Starsze pliki']:
                         existing_structure['date_folders'][item] = []
-                        self._scan_theme_folders(item_path, existing_structure)
+                        self._scan_dynamic_folders(item_path, existing_structure)
 
         except OSError as e:
             print(f"Błąd skanowania folderów dat w {main_folder_path}: {e}")
 
-    def _scan_theme_folders(self, date_folder_path, existing_structure):
-        """Skanuje foldery tematyczne w folderze daty"""
-
+    def _scan_dynamic_folders(self, date_folder_path, existing_structure):
+        """Skanuje dynamiczne foldery w folderze daty"""
         try:
             for item in os.listdir(date_folder_path):
                 item_path = os.path.join(date_folder_path, item)
                 if os.path.isdir(item_path):
-                    # To jest folder tematyczny
-                    theme_name = item
-                    if theme_name not in existing_structure['theme_folders']:
-                        existing_structure['theme_folders'][theme_name] = []
-                    existing_structure['theme_folders'][theme_name].append(item_path)
+                    # To jest folder dynamiczny
+                    dynamic_name = item
+                    if dynamic_name not in existing_structure['dynamic_folders']:
+                        existing_structure['dynamic_folders'][dynamic_name] = []
+                    existing_structure['dynamic_folders'][dynamic_name].append(item_path)
 
         except OSError as e:
-            print(f"Błąd skanowania folderów tematycznych w {date_folder_path}: {e}")
+            print(f"Błąd skanowania folderów dynamicznych w {date_folder_path}: {e}")
 
     def _adapt_to_existing_structure(self, target_path, existing_structure):
         """Dostosowuje ścieżkę docelową do istniejącej struktury folderów"""
-
         if not existing_structure:
             return target_path
 
@@ -519,18 +527,18 @@ class AutoFolderOrganizer:
                                 break
                 break
 
-        # Sprawdź foldery tematyczne
+        # Sprawdź foldery dynamiczne
         for i, part in enumerate(path_parts):
-            if part in existing_structure['theme_folders']:
-                print(f"  🔄 Znaleziono istniejący folder tematyczny: {part}")
-                # Folder tematyczny już istnieje, nie trzeba zmieniać
+            if part in existing_structure['dynamic_folders']:
+                print(f"  🔄 Znaleziono istniejący folder dynamiczny: {part}")
+                # Folder dynamiczny już istnieje, nie trzeba zmieniać
                 break
             else:
-                # Sprawdź podobne foldery tematyczne
-                for existing_theme in existing_structure['theme_folders'].keys():
-                    if self._folders_are_similar(part, existing_theme):
-                        adapted_parts[i] = existing_theme
-                        print(f"  🔄 Dostosowano folder tematyczny: {part} -> {existing_theme}")
+                # Sprawdź podobne foldery dynamiczne
+                for existing_dynamic in existing_structure['dynamic_folders'].keys():
+                    if self._folders_are_similar(part, existing_dynamic):
+                        adapted_parts[i] = existing_dynamic
+                        print(f"  🔄 Dostosowano folder dynamiczny: {part} -> {existing_dynamic}")
                         break
 
         adapted_path = os.sep.join(adapted_parts)
@@ -542,7 +550,6 @@ class AutoFolderOrganizer:
 
     def _folders_are_similar(self, folder1, folder2):
         """Sprawdza czy dwa foldery są podobne (ignoruje ikony emoji)"""
-
         # Usuń emoji i znaki specjalne
         import re
         clean1 = re.sub(r'[^\w\s]', '', folder1).strip().lower()
@@ -580,12 +587,12 @@ class AutoFolderOrganizer:
             },
             "full": {
                 "name": "Pełny",
-                "description": "Typ pliku + data + tematyka",
-                "example": "📄 Dokumenty/2024/03 - March/Faktury/faktura.pdf"
+                "description": "Typ pliku + data + dynamiczne kategorie",
+                "example": "📄 Dokumenty/2024/03 - March/Seria: Umowy/dokument.pdf"
             },
             "theme_first": {
-                "name": "Tematyka pierwsza",
-                "description": "Tematyka + typ pliku + data",
-                "example": "Faktury/📄 Dokumenty/2024/03 - March/faktura.pdf"
+                "name": "Dynamiczne pierwsza",
+                "description": "Dynamiczne kategorie + typ pliku + data",
+                "example": "Seria: Umowy/📄 Dokumenty/2024/03 - March/dokument.pdf"
             }
         }

@@ -1,4 +1,4 @@
-# category_analyzer.py
+# category_analyzer.py - UPROSZCZONA wersja z dynamicznymi kategoriami
 import os
 import re
 import json
@@ -6,7 +6,7 @@ import traceback
 from datetime import datetime
 from collections import Counter, defaultdict
 
-# Rozszerzony słownik rozszerzeń do kategorii plików
+# Zostaw TYLKO rozszerzenia - reszta będzie dynamiczna
 FILE_CATEGORIES = {
     'dokumenty_tekstowe': ['.txt', '.doc', '.docx', '.rtf', '.odt', '.md'],
     'dokumenty_pdf': ['.pdf'],
@@ -34,64 +34,28 @@ FILE_CATEGORIES = {
     'mapy_dane_przestrzenne': ['.shp', '.geojson', '.kml', '.kmz', '.gpx']
 }
 
-# Odwrotny słownik dla szybkiego wyszukiwania
+# Odwrotny słownik dla rozszerzeń
 EXTENSION_TO_CATEGORY = {}
 for category, extensions in FILE_CATEGORIES.items():
     for ext in extensions:
-        if ext not in EXTENSION_TO_CATEGORY:  # Zapobiegamy nadpisaniu, jeśli rozszerzenie jest już w słowniku
+        if ext not in EXTENSION_TO_CATEGORY:
             EXTENSION_TO_CATEGORY[ext.lower()] = category
 
-# Rozszerzone wzorce nazw plików dla kategoryzacji
-NAME_PATTERNS = {
-    'faktura': [r'faktura', r'rachunek', r'invoice', r'fv', r'paragon', r'bill', r'payment'],
-    'cv_resume': [r'cv', r'resume', r'życiorys', r'curriculum', r'bio'],
-    'raport': [r'raport', r'report', r'sprawozdanie', r'zestawienie', r'statystyk[ai]', r'podsumowanie'],
-    'backup': [r'backup', r'kopia', r'archiwum', r'\bkopia zapasowa\b', r'\bkopia\b', r'bak'],
-    'notatka': [r'notatka', r'note', r'notes', r'uwagi', r'zapiski', r'reminder'],
-    'projekt': [r'projekt', r'project', r'^proj_', r'^prj_', r'zadanie', r'task'],
-    'dokumentacja': [r'dokumentacja', r'documentation', r'manual', r'instrukcja', r'handbook', r'guide'],
-    'konfiguracja': [r'config', r'konfiguracja', r'ustawienia', r'settings', r'prefs', r'preferences'],
-    'prezentacja': [r'prezentacja', r'presentation', r'slajdy', r'slides'],
-    'umowa': [r'umowa', r'kontrakt', r'contract', r'agreement', r'deal'],
-    'oferta': [r'oferta', r'offer', r'proposition', r'propozycja', r'cennik', r'pricing'],
-    'ankieta': [r'ankieta', r'survey', r'poll', r'questionnaire', r'badanie'],
-    'zdjęcia': [r'zdj[ęe]cie', r'zdj[ęe]cia', r'foto', r'photo', r'img'],
-    'muzyka': [r'muzyka', r'music', r'song', r'piosenka', r'utwor', r'track'],
-    'wideo': [r'wideo', r'video', r'film', r'movie', r'nagranie', r'recording'],
-    'szkic': [r'szkic', r'draft', r'draft_', r'szkic_', r'roboczy', r'temp_'],
-    'książka': [r'książka', r'book', r'reading', r'lektura', r'powieść', r'novel'],
-    'list': [r'list', r'letter', r'pismo', r'korespondencja', r'correspondence'],
-    'prywatne': [r'prywatne', r'private', r'personal', r'osobiste'],
-    'praca': [r'praca', r'work', r'job', r'zawodowe', r'professional'],
-    'szkoła': [r'szkoła', r'school', r'uczelnia', r'studia', r'zadanie', r'homework'],
-    'wydarzenie': [r'wydarzenie', r'event', r'impreza', r'party', r'spotkanie', r'meeting'],
+# USUŃ wszystkie predefiniowane wzorce - będziemy używać tylko dynamicznych!
+# Zostaw tylko kilka oczywistych wzorców które naprawdę działają
+SIMPLE_PATTERNS = {
+    'backup': [r'\bbackup\b', r'\bkopia\b', r'\bbak\b'],
+    'config': [r'\bconfig\b', r'\bkonfig\b', r'\bustawienia\b', r'\bsettings\b'],
+    'temp': [r'\btemp\b', r'\btmp\b', r'\btymczasowy\b'],
+    'test': [r'\btest\b', r'\btestowy\b', r'\bproba\b']
 }
 
-# Lista słów ignorowanych w nazwach plików (stopwords)
-STOPWORDS = {
-    'plik', 'obraz', 'file', 'kopia', 'copy', 'nowy', 'new', 'img', 'image', 'doc', 'document',
-    'text', 'tekst', 'dane', 'data', 'folder', 'katalog', 'directory', 'tem', 'temp', 'tymczasowy',
-    'temporary', 'download', 'pobrane', 'upload', 'final', 'finalny', 'ostateczny', 'last',
-    'pierwszy', 'first', 'test', 'testowy', 'example', 'przykład', 'sample', 'próbka'
-}
-
-# Wzorce czasowe do identyfikacji plików związanych z datami
-DATE_PATTERNS = {
-    'dzienny': [r'\d{4}-\d{2}-\d{2}', r'\d{2}-\d{2}-\d{4}', r'\d{2}\.\d{2}\.\d{4}'],
-    'miesięczny': [r'\d{4}-\d{2}', r'\d{2}-\d{4}', r'(sty|lut|mar|kwi|maj|cze|lip|sie|wrz|paź|lis|gru)_\d{4}'],
-    'roczny': [r'\b\d{4}\b', r'rok_\d{4}', r'year_\d{4}']
-}
-
-# Wzorce identyfikujące pliki związane z konkretnymi przedmiotami w szkole
-SUBJECT_PATTERNS = {
-    'matematyka': [r'mat', r'math', r'matematyka', r'mathematics', r'algebra', r'geometry', r'geometria'],
-    'fizyka': [r'fiz', r'phys', r'fizyka', r'physics'],
-    'chemia': [r'chem', r'chemia', r'chemistry'],
-    'biologia': [r'bio', r'biologia', r'biology'],
-    'historia': [r'hist', r'historia', r'history'],
-    'geografia': [r'geo', r'geografia', r'geography'],
-    'języki': [r'ang', r'eng', r'język', r'language', r'polish', r'angielski', r'niemiecki', r'hiszpański', r'polski'],
-    'informatyka': [r'inf', r'informatyka', r'computer', r'programming', r'programowanie', r'it', r'comp']
+# Słowa do ignorowania w dynamicznych kategoriach
+IGNORE_WORDS = {
+    'plik', 'file', 'dokument', 'document', 'obraz', 'image', 'foto', 'photo',
+    'nowy', 'new', 'stary', 'old', 'kopia', 'copy', 'final', 'ostateczny',
+    'wersja', 'version', 'draft', 'szkic', 'temp', 'tymczasowy', 'test',
+    'bez', 'tytulu', 'untitled', 'bez_nazwy', 'unnamed', 'noname'
 }
 
 
@@ -99,6 +63,9 @@ class CategoryAnalyzer:
     def __init__(self, history_file='transfer_history.json'):
         self.history_file = history_file
         self.transfer_history = self._load_history()
+        # Nowa: historia dynamicznych kategorii
+        self.dynamic_patterns = defaultdict(int)  # wzorzec -> liczba wystąpień
+        self._load_dynamic_patterns()
 
     def _load_history(self):
         """Wczytuje historię przenoszenia plików"""
@@ -107,89 +74,47 @@ class CategoryAnalyzer:
                 with open(self.history_file, 'r', encoding='utf-8') as f:
                     history = json.load(f)
 
-                    # Upewnij się, że wszystkie wymagane klucze istnieją
-                    if 'extensions' not in history:
-                        history['extensions'] = {}
-                    if 'patterns' not in history:
-                        history['patterns'] = {}
-                    if 'destinations' not in history:
-                        history['destinations'] = {}
-                    if 'content_types' not in history:
-                        history['content_types'] = {}
-
+                    required_keys = ['extensions', 'patterns', 'destinations', 'content_types']
+                    for key in required_keys:
+                        if key not in history:
+                            history[key] = {}
                     return history
             except Exception as e:
                 print(f"Błąd podczas wczytywania historii: {e}")
-                return {'extensions': {}, 'patterns': {}, 'destinations': {}, 'content_types': {}}
 
-        # Jeśli plik nie istnieje, zwróć pusty słownik z wszystkimi wymaganymi kluczami
         return {'extensions': {}, 'patterns': {}, 'destinations': {}, 'content_types': {}}
+
+    def _load_dynamic_patterns(self):
+        """Wczytuje dynamiczne wzorce z historii"""
+        try:
+            dynamic_file = 'dynamic_patterns.json'
+            if os.path.exists(dynamic_file):
+                with open(dynamic_file, 'r', encoding='utf-8') as f:
+                    self.dynamic_patterns = defaultdict(int, json.load(f))
+        except Exception as e:
+            print(f"Błąd wczytywania dynamicznych wzorców: {e}")
+
+    def _save_dynamic_patterns(self):
+        """Zapisuje dynamiczne wzorce"""
+        try:
+            with open('dynamic_patterns.json', 'w', encoding='utf-8') as f:
+                json.dump(dict(self.dynamic_patterns), f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Błąd zapisywania dynamicznych wzorców: {e}")
 
     def save_history(self):
         """Zapisuje historię przenoszenia plików"""
         with open(self.history_file, 'w', encoding='utf-8') as f:
             json.dump(self.transfer_history, f, ensure_ascii=False, indent=2)
 
-    def record_transfer(self, file_info):
-        """Zapisuje informację o przeniesieniu pliku do historii"""
-        if file_info.status != "Przeniesiono" or not file_info.destination_path:
-            return
-
-        extension = file_info.extension.lower()
-        destination_dir = os.path.dirname(file_info.destination_path)
-
-        # Zapisujemy informacje o rozszerzeniu
-        if extension not in self.transfer_history['extensions']:
-            self.transfer_history['extensions'][extension] = {}
-
-        if destination_dir not in self.transfer_history['extensions'][extension]:
-            self.transfer_history['extensions'][extension][destination_dir] = 0
-
-        self.transfer_history['extensions'][extension][destination_dir] += 1
-
-        # Zapisujemy informacje o wzorcach w nazwie i kategoriach z nazwy
-        # Przechodzimy przez wszystkie kategorie z nazwy (zarówno predefiniowane jak i dynamiczne)
-        for category_name in file_info.category_name:
-            if category_name not in self.transfer_history['patterns']:
-                self.transfer_history['patterns'][category_name] = {}
-
-            if destination_dir not in self.transfer_history['patterns'][category_name]:
-                self.transfer_history['patterns'][category_name][destination_dir] = 0
-
-            self.transfer_history['patterns'][category_name][destination_dir] += 1
-
-        # Zapisujemy informacje o typie zawartości (MIME)
-        if hasattr(file_info, 'mime_type') and file_info.mime_type and file_info.mime_type != "Nieznany (błąd)":
-            # Sprawdź, czy klucz 'content_types' istnieje w słowniku transfer_history
-            if 'content_types' not in self.transfer_history:
-                self.transfer_history['content_types'] = {}
-
-            if file_info.mime_type not in self.transfer_history['content_types']:
-                self.transfer_history['content_types'][file_info.mime_type] = {}
-
-            if destination_dir not in self.transfer_history['content_types'][file_info.mime_type]:
-                self.transfer_history['content_types'][file_info.mime_type][destination_dir] = 0
-
-            self.transfer_history['content_types'][file_info.mime_type][destination_dir] += 1
-
-        # Zapisujemy ogólne informacje o folderach docelowych
-        if destination_dir not in self.transfer_history['destinations']:
-            self.transfer_history['destinations'][destination_dir] = 0
-
-        self.transfer_history['destinations'][destination_dir] += 1
-
-        # Zapisujemy historię
-        self.save_history()
-
     def categorize_file(self, file_path):
-        """Kategoryzuje plik na podstawie różnych czynników"""
+        """UPROSZCZONA kategoryzacja - tylko rozszerzenia + dynamiczne kategorie"""
         file_name = os.path.basename(file_path)
         name, extension = os.path.splitext(file_name)
         extension = extension.lower()
-        name_lower = name.lower()  # Konwersja na małe litery dla lepszego dopasowania
+        name_lower = name.lower()
 
         try:
-            # Pobranie metadanych pliku
             file_stats = os.stat(file_path)
             file_size = file_stats.st_size
             creation_date = datetime.fromtimestamp(file_stats.st_ctime)
@@ -199,151 +124,147 @@ class CategoryAnalyzer:
             creation_date = None
             modification_date = None
 
-        # Wstępne wyniki kategoryzacji
         results = {
             'kategoria_rozszerzenia': 'nieznana',
             'kategoria_nazwy': [],
             'kategoria_wielkości': self._categorize_by_size(file_size),
             'kategoria_daty': self._categorize_by_date(name_lower, creation_date, modification_date),
-            'kategoria_przedmiotu': [],  # Dla plików związanych ze szkołą/nauką
-            'kategoria_czasowa': [],  # Dzienne, miesięczne, roczne
+            'kategoria_przedmiotu': [],
+            'kategoria_czasowa': [],
             'sugerowane_lokalizacje': [],
-            'wszystkie_kategorie': set()  # Zbiór wszystkich kategorii (do łatwiejszego grupowania)
+            'wszystkie_kategorie': set()
         }
 
-        # 1. Kategoria na podstawie rozszerzenia
+        # 1. Kategoria na podstawie rozszerzenia (jedyna predefiniowana)
         if extension in EXTENSION_TO_CATEGORY:
             results['kategoria_rozszerzenia'] = EXTENSION_TO_CATEGORY[extension]
             results['wszystkie_kategorie'].add(EXTENSION_TO_CATEGORY[extension])
 
-        # 2. Kategoria na podstawie wzorców w nazwie
-        for pattern_name, patterns in NAME_PATTERNS.items():
+        # 2. Sprawdź tylko kilka prostych wzorców
+        for pattern_name, patterns in SIMPLE_PATTERNS.items():
             for pattern in patterns:
                 if re.search(pattern, name_lower):
                     results['kategoria_nazwy'].append(pattern_name)
                     results['wszystkie_kategorie'].add(pattern_name)
                     break
 
-        # 3. Kategoria na podstawie przedmiotu (dla plików szkolnych/edukacyjnych)
-        for subject, patterns in SUBJECT_PATTERNS.items():
-            for pattern in patterns:
-                if re.search(pattern, name_lower):
-                    results['kategoria_przedmiotu'].append(subject)
-                    results['wszystkie_kategorie'].add(f"przedmiot_{subject}")
-                    break
+        # 3. NOWE: Dynamiczne kategorie z nazwy pliku
+        dynamic_categories = self._extract_dynamic_categories(name_lower)
+        results['kategoria_nazwy'].extend(dynamic_categories)
+        for cat in dynamic_categories:
+            results['wszystkie_kategorie'].add(cat)
 
-        # 4. Kategoria na podstawie wzorców czasowych
-        for time_pattern_name, patterns in DATE_PATTERNS.items():
-            for pattern in patterns:
-                if re.search(pattern, name_lower):
-                    results['kategoria_czasowa'].append(time_pattern_name)
-                    results['wszystkie_kategorie'].add(f"czas_{time_pattern_name}")
-                    break
+        # 4. Wzorce czasowe
+        time_patterns = self._detect_time_patterns(name_lower)
+        results['kategoria_czasowa'] = time_patterns
+        for pattern in time_patterns:
+            results['wszystkie_kategorie'].add(f"czas_{pattern}")
 
-        # 5. Dynamiczne kategorie z nazwy pliku
-        words_from_name = re.findall(r'[a-zA-ZżółćęśąźńŻÓŁĆĘŚĄŹŃ0-9]{3,}', name_lower)
-        for word in words_from_name:
-            if word not in STOPWORDS and len(word) >= 3:
-                if not any(word in pattern for pattern_list in NAME_PATTERNS.values() for pattern in pattern_list):
-                    results['kategoria_nazwy'].append(word)
-                    results['wszystkie_kategorie'].add(f"słowo_{word}")
+        # 5. Kategorie wielkości i daty
+        results['wszystkie_kategorie'].add(f"rozmiar_{results['kategoria_wielkości']}")
+        results['wszystkie_kategorie'].add(f"data_{results['kategoria_daty']}")
 
-        # 6. Sugerowane lokalizacje na podstawie historii
-        suggested_locations = []
+        # 6. Sugerowane lokalizacje z historii
+        results['sugerowane_lokalizacje'] = self._get_suggested_locations(
+            extension, results['kategoria_nazwy']
+        )
 
-        # Na podstawie rozszerzenia
-        if extension in self.transfer_history['extensions']:
-            ext_locations = sorted(
-                self.transfer_history['extensions'][extension].items(),
-                key=lambda x: x[1],
-                reverse=True
-            )
-            for loc, count in ext_locations[:3]:  # Top 3 lokalizacje
-                suggested_locations.append((loc, f"Na podstawie rozszerzenia {extension}", count))
-
-        # Na podstawie wzorców w nazwie
-        for pattern_name in results['kategoria_nazwy']:
-            if pattern_name in self.transfer_history['patterns']:
-                pattern_locations = sorted(
-                    self.transfer_history['patterns'][pattern_name].items(),
-                    key=lambda x: x[1],
-                    reverse=True
-                )
-                for loc, count in pattern_locations[:2]:  # Top 2 lokalizacje
-                    suggested_locations.append((loc, f"Na podstawie wzorca '{pattern_name}'", count))
-
-        # Jeśli brak sugestii, użyj najczęściej używanych folderów
-        if not suggested_locations and self.transfer_history['destinations']:
-            general_locations = sorted(
-                self.transfer_history['destinations'].items(),
-                key=lambda x: x[1],
-                reverse=True
-            )
-            for loc, count in general_locations[:2]:  # Top 2 lokalizacje
-                suggested_locations.append((loc, "Często używana lokalizacja", count))
-
-        # Sortuj sugestie według liczby wystąpień
-        suggested_locations.sort(key=lambda x: x[2], reverse=True)
-
-        # Usuń duplikaty zachowując kolejność
-        unique_locations = []
-        seen = set()
-        for loc, reason, count in suggested_locations:
-            if loc not in seen:
-                unique_locations.append((loc, reason, count))
-                seen.add(loc)
-
-        results['sugerowane_lokalizacje'] = unique_locations
-
-        # Konwersja zbioru wszystkich kategorii na listę dla łatwiejszego przetwarzania
         results['wszystkie_kategorie'] = list(results['wszystkie_kategorie'])
 
+        # Zapisz nowe dynamiczne wzorce
+        self._learn_from_filename(name_lower)
+
         return results
+
+    def _extract_dynamic_categories(self, filename):
+        """NOWA: Ekstraktuje dynamiczne kategorie z nazwy pliku"""
+        categories = []
+
+        # Usuń cyfry i znaki specjalne, zostaw tylko słowa
+        clean_name = re.sub(r'[^\w\s]', ' ', filename)
+        clean_name = re.sub(r'\d+', ' ', clean_name)
+
+        # Podziel na słowa
+        words = [w.strip() for w in clean_name.split() if len(w.strip()) >= 3]
+
+        # Filtruj słowa ignorowane
+        meaningful_words = [w for w in words if w not in IGNORE_WORDS]
+
+        # Znajdź najbardziej znaczące słowa (najdłuższe lub z historii)
+        for word in meaningful_words:
+            if len(word) >= 4:  # Minimum 4 znaki
+                # Sprawdź czy to słowo już wystąpiło w historii
+                if word in self.dynamic_patterns and self.dynamic_patterns[word] >= 2:
+                    categories.append(f"grupa_{word}")
+                elif len(word) >= 6:  # Długie słowa są prawdopodobnie znaczące
+                    categories.append(f"temat_{word}")
+
+        # Znajdź prefiksy i sufiksy (pierwsze/ostatnie słowo)
+        if meaningful_words:
+            first_word = meaningful_words[0]
+            if len(first_word) >= 4:
+                categories.append(f"seria_{first_word}")
+
+            if len(meaningful_words) > 1:
+                last_word = meaningful_words[-1]
+                if len(last_word) >= 4 and last_word != first_word:
+                    categories.append(f"typ_{last_word}")
+
+        return categories[:3]  # Maksymalnie 3 kategorie dynamiczne
+
+    def _learn_from_filename(self, filename):
+        """Uczy się z nazw plików dla przyszłych kategoryzacji"""
+        # Ekstraktuj słowa kluczowe
+        words = re.findall(r'[a-zA-ZżółćęśąźńŻÓŁĆĘŚĄŹŃ]{4,}', filename)
+
+        for word in words:
+            if word not in IGNORE_WORDS:
+                self.dynamic_patterns[word] += 1
+
+        # Zapisuj co 10 nowych wzorców
+        if sum(self.dynamic_patterns.values()) % 10 == 0:
+            self._save_dynamic_patterns()
+
+    def _detect_time_patterns(self, name):
+        """Wykrywa wzorce czasowe w nazwie pliku"""
+        patterns = []
+
+        # Proste wzorce dat
+        if re.search(r'\d{4}-\d{2}-\d{2}', name):
+            patterns.append('dzienny')
+        elif re.search(r'\d{4}-\d{2}', name):
+            patterns.append('miesięczny')
+        elif re.search(r'\b\d{4}\b', name):
+            patterns.append('roczny')
+
+        return patterns
 
     def _categorize_by_size(self, file_size):
         """Kategoryzuje plik na podstawie rozmiaru"""
         try:
-            # Ensure we have a clean integer value
-            if file_size is None:
-                file_size = 0
-            elif isinstance(file_size, str):
-                clean_size = ''.join(c for c in file_size if c.isdigit() or c == '.')
-                file_size = int(float(clean_size)) if clean_size else 0
-            else:
-                file_size = int(file_size) if file_size else 0
+            file_size = int(file_size) if file_size else 0
 
-            # Print for verification
-            print(f"CATEGORIZING: Size {file_size} bytes")
-
-            # Define size constants clearly
             KB = 1024
             MB = KB * 1024
             GB = MB * 1024
 
-            # Use a clear and explicit categorization logic
             if file_size < 10 * KB:
-                category = 'bardzo_mały'
+                return 'bardzo_mały'
             elif file_size < 500 * KB:
-                category = 'mały'
+                return 'mały'
             elif file_size < 5 * MB:
-                category = 'średni'
+                return 'średni'
             elif file_size < 50 * MB:
-                category = 'duży'
+                return 'duży'
             elif file_size < 500 * MB:
-                category = 'bardzo_duży'
+                return 'bardzo_duży'
             else:
-                category = 'ogromny'
-
-            print(f"SIZE CATEGORY RESULT: {category} for {file_size} bytes")
-            return category
-
-        except Exception as e:
-            print(f"Error in _categorize_by_size: {e}")
-            traceback.print_exc()
+                return 'ogromny'
+        except:
             return 'nieznany'
 
     def _categorize_by_date(self, name, creation_date, modification_date):
-        """Kategoryzuje plik na podstawie daty utworzenia/modyfikacji"""
+        """Kategoryzuje plik na podstawie daty"""
         if not creation_date or not modification_date:
             return 'nieznana'
 
@@ -361,72 +282,198 @@ class CategoryAnalyzer:
         else:
             return 'starszy'
 
-    def get_suggested_destination(self, file_path):
-        """Zwraca sugerowaną lokalizację docelową dla pliku"""
-        categorization = self.categorize_file(file_path)
-        suggestions = categorization['sugerowane_lokalizacje']
+    def _get_suggested_locations(self, extension, name_categories):
+        """Pobiera sugerowane lokalizacje na podstawie historii"""
+        suggestions = []
 
-        if suggestions:
-            return suggestions[0][0]  # Pierwsza sugerowana lokalizacja
+        # Na podstawie rozszerzenia
+        if extension in self.transfer_history['extensions']:
+            ext_locations = sorted(
+                self.transfer_history['extensions'][extension].items(),
+                key=lambda x: x[1], reverse=True
+            )
+            for loc, count in ext_locations[:2]:
+                suggestions.append((loc, f"Rozszerzenie {extension}", count))
 
-        return None
+        # Na podstawie kategorii nazwy
+        for category in name_categories:
+            if category in self.transfer_history['patterns']:
+                pattern_locations = sorted(
+                    self.transfer_history['patterns'][category].items(),
+                    key=lambda x: x[1], reverse=True
+                )
+                for loc, count in pattern_locations[:1]:
+                    suggestions.append((loc, f"Kategoria '{category}'", count))
+
+        return suggestions
+
+    def record_transfer(self, file_info):
+        """Zapisuje informację o przeniesieniu pliku do historii"""
+        if file_info.status != "Przeniesiono" or not file_info.destination_path:
+            return
+
+        extension = file_info.extension.lower()
+        destination_dir = os.path.dirname(file_info.destination_path)
+
+        # Zapisz historię rozszerzeń
+        if extension not in self.transfer_history['extensions']:
+            self.transfer_history['extensions'][extension] = {}
+        if destination_dir not in self.transfer_history['extensions'][extension]:
+            self.transfer_history['extensions'][extension][destination_dir] = 0
+        self.transfer_history['extensions'][extension][destination_dir] += 1
+
+        # Zapisz historię wzorców
+        for category_name in file_info.category_name:
+            if category_name not in self.transfer_history['patterns']:
+                self.transfer_history['patterns'][category_name] = {}
+            if destination_dir not in self.transfer_history['patterns'][category_name]:
+                self.transfer_history['patterns'][category_name][destination_dir] = 0
+            self.transfer_history['patterns'][category_name][destination_dir] += 1
+
+        # Zapisz historię
+        self.save_history()
 
     def group_files_by_category(self, files_info_list):
-        """Grupuje pliki według różnych kategorii"""
-        # Inicjalizacja słowników dla różnych typów grupowania
+        """Grupuje pliki według kategorii"""
         grouped_by_extension_category = defaultdict(list)
         grouped_by_name_category = defaultdict(list)
         grouped_by_size = defaultdict(list)
         grouped_by_age = defaultdict(list)
-        grouped_by_subject = defaultdict(list)
-        grouped_by_time_pattern = defaultdict(list)
+        grouped_by_dynamic = defaultdict(list)  # NOWE: grupy dynamiczne
 
-        # Wszystkie grupy (do wyświetlenia sumarycznego)
         all_groups = defaultdict(list)
 
         for file_info in files_info_list:
-            # Pobieranie kategoryzacji na podstawie ścieżki źródłowej
-            categorization = self.categorize_file(file_info.source_path)
-
-            # Grupowanie według kategorii rozszerzenia
-            ext_category = categorization['kategoria_rozszerzenia']
+            # Grupowanie według rozszerzenia
+            ext_category = file_info.category_extension
             grouped_by_extension_category[ext_category].append(file_info)
             all_groups[f"rozszerzenie_{ext_category}"].append(file_info)
 
             # Grupowanie według kategorii nazwy
-            for name_cat in categorization['kategoria_nazwy']:
+            for name_cat in file_info.category_name:
                 grouped_by_name_category[name_cat].append(file_info)
                 all_groups[f"nazwa_{name_cat}"].append(file_info)
 
-            # Grupowanie według rozmiaru
-            size_category = categorization['kategoria_wielkości']
+                # Specjalne grupowanie dynamiczne
+                if name_cat.startswith(('grupa_', 'seria_', 'temat_')):
+                    grouped_by_dynamic[name_cat].append(file_info)
+
+            # Pozostałe grupowania
+            size_category = file_info.size_category
             grouped_by_size[size_category].append(file_info)
             all_groups[f"rozmiar_{size_category}"].append(file_info)
 
-            # Grupowanie według wieku
-            age_category = categorization['kategoria_daty']
+            age_category = file_info.date_category
             grouped_by_age[age_category].append(file_info)
             all_groups[f"wiek_{age_category}"].append(file_info)
 
-            # Grupowanie według przedmiotu
-            for subject in categorization['kategoria_przedmiotu']:
-                grouped_by_subject[subject].append(file_info)
-                all_groups[f"przedmiot_{subject}"].append(file_info)
-
-            # Grupowanie według wzorca czasowego
-            for time_pattern in categorization['kategoria_czasowa']:
-                grouped_by_time_pattern[time_pattern].append(file_info)
-                all_groups[f"czas_{time_pattern}"].append(file_info)
-
-        # Tworzenie wynikowego słownika
-        result = {
+        return {
             'według_rozszerzenia': grouped_by_extension_category,
             'według_nazwy': grouped_by_name_category,
             'według_rozmiaru': grouped_by_size,
             'według_wieku': grouped_by_age,
-            'według_przedmiotu': grouped_by_subject,
-            'według_wzorca_czasowego': grouped_by_time_pattern,
+            'dynamiczne_grupy': grouped_by_dynamic,  # NOWE
             'wszystkie_grupy': all_groups
         }
 
-        return result
+    def get_dynamic_patterns_stats(self):
+        """Zwraca statystyki dynamicznych wzorców"""
+        if not self.dynamic_patterns:
+            return "Brak wzorców dynamicznych"
+
+        stats = f"Wzorce dynamiczne ({len(self.dynamic_patterns)} unikalnych):\n"
+        top_patterns = sorted(self.dynamic_patterns.items(), key=lambda x: x[1], reverse=True)
+
+        for pattern, count in top_patterns[:10]:
+            stats += f"  {pattern}: {count} wystąpień\n"
+
+        return stats
+
+    def smart_group_files_by_name(self, files_info_list):
+        """Inteligentne grupowanie na podstawie podobieństwa nazw"""
+        groups = defaultdict(list)
+        processed_files = set()
+
+        for file_info in files_info_list:
+            if file_info in processed_files:
+                continue
+
+            filename = file_info.name.lower()
+
+            # Znajdź pliki o podobnych nazwach
+            similar_files = [file_info]
+
+            for other_file in files_info_list:
+                if other_file != file_info and other_file not in processed_files:
+                    other_name = other_file.name.lower()
+
+                    # Sprawdź podobieństwo (wspólny prefiks/sufiks)
+                    if self._files_are_similar(filename, other_name):
+                        similar_files.append(other_file)
+                        processed_files.add(other_file)
+
+            # Utwórz grupę
+            if len(similar_files) > 1:
+                # Znajdź wspólną część nazwy
+                common_part = self._find_common_part([f.name for f in similar_files])
+                group_name = f"Seria: {common_part}" if common_part else f"Grupa: {file_info.name[:10]}"
+                groups[group_name] = similar_files
+            else:
+                # Pojedynczy plik - grupuj według typu lub pierwszej kategorii
+                if file_info.category_name:
+                    category = file_info.category_name[0]
+                    groups[f"Kategoria: {category}"].append(file_info)
+                else:
+                    groups["Różne"].append(file_info)
+
+            processed_files.add(file_info)
+
+        return dict(groups)
+
+    def _files_are_similar(self, name1, name2):
+        """Sprawdza czy nazwy plików są podobne"""
+        # Usuń cyfry i znaki specjalne
+        clean1 = re.sub(r'[^\w]', '', name1)
+        clean2 = re.sub(r'[^\w]', '', name2)
+
+        # Sprawdź wspólny prefiks (minimum 4 znaki)
+        common_prefix_len = 0
+        for c1, c2 in zip(clean1, clean2):
+            if c1 == c2:
+                common_prefix_len += 1
+            else:
+                break
+
+        if common_prefix_len >= 4:
+            return True
+
+        # Sprawdź czy jeden zawiera drugi (dla dłuższych nazw)
+        if len(clean1) >= 6 and len(clean2) >= 6:
+            shorter = clean1 if len(clean1) < len(clean2) else clean2
+            longer = clean2 if len(clean1) < len(clean2) else clean1
+
+            if shorter in longer:
+                return True
+
+        return False
+
+    def _find_common_part(self, names):
+        """Znajduje wspólną część nazw"""
+        if not names:
+            return ""
+
+        # Znajdź najdłuższy wspólny prefiks
+        common = names[0]
+        for name in names[1:]:
+            new_common = ""
+            for c1, c2 in zip(common, name):
+                if c1.lower() == c2.lower():
+                    new_common += c1
+                else:
+                    break
+            common = new_common
+
+        # Usuń końcowe cyfry i znaki specjalne
+        common = re.sub(r'[\d_\-\s]+$', '', common)
+
+        return common if len(common) >= 3 else ""
