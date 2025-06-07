@@ -35,7 +35,7 @@ except:
         sys.exit(1)
 
 from file_operations import select_files, select_destination, move_files
-from gui_components import create_main_window, show_files_table
+from gui_components import create_main_window, show_files_table_inline
 from auto_folder_organizer import AutoFolderOrganizer
 
 # Próbujemy zaimportować rozszerzony wizualizer
@@ -124,7 +124,7 @@ class AutoOrganizeDialog:
         # Utworzenie okna
         self.window = tk.Toplevel(parent)
         self.window.title("Automatyczne organizowanie plików")
-        self.window.geometry("800x700")
+        self.window.geometry("800x600")
         self.window.resizable(True, True)
 
         # Wyśrodkuj okno
@@ -212,13 +212,6 @@ class AutoOrganizeDialog:
         buttons_frame = ttk.Frame(main_frame)
         buttons_frame.pack(fill="x", pady=(10, 0))
 
-        # Checkbox dla trybu symulacji
-        self.dry_run_var = tk.BooleanVar(value=True)
-        dry_run_cb = ttk.Checkbutton(buttons_frame,
-                                     text="Tryb symulacji (bez rzeczywistego przenoszenia)",
-                                     variable=self.dry_run_var)
-        dry_run_cb.pack(anchor="w")
-
         # Checkbox dla używania istniejącej struktury
         self.use_existing_var = tk.BooleanVar(value=True)
         existing_cb = ttk.Checkbutton(buttons_frame,
@@ -290,7 +283,6 @@ class AutoOrganizeDialog:
         """Wykonuje automatyczne organizowanie"""
         self.result = {
             'mode': self.organization_mode.get(),
-            'dry_run': self.dry_run_var.get(),
             'use_existing': self.use_existing_var.get(),
             'execute': True
         }
@@ -307,6 +299,7 @@ def main():
     # Utworzenie głównego okna
     root = create_main_window()
     root.title("🎯 System Organizacji Plików z Dynamicznymi Kategoriami")
+    root.geometry("1200x800")  # Zwiększone okno dla wyświetlania danych
 
     # Konfiguracja stylu
     style = ttk.Style()
@@ -317,6 +310,7 @@ def main():
 
     # Zmienne globalne
     files_info_list = []
+    details_frame_ref = [None]  # Używamy listy żeby móc modyfikować w funkcjach
 
     # Inicjalizacja organizatora folderów
     auto_organizer = AutoFolderOrganizer(category_analyzer)
@@ -358,8 +352,8 @@ def main():
             print(
                 f"Zakończono przenoszenie plików w {analysis_time:.2f} sekund. Otrzymano {len(files_info_list)} informacji o plikach.")
 
-            # Wyświetlenie tabeli z informacjami o plikach
-            show_files_table(files_info_list, category_analyzer)
+            # Wyświetlenie tabeli z informacjami o plikach w głównym oknie
+            show_files_table_inline(files_info_list, category_analyzer, details_frame_ref[0])
 
             # Wyświetl statystyki dynamicznych wzorców (jeśli dostępne)
             if USE_DYNAMIC_ANALYZER and hasattr(category_analyzer, 'get_dynamic_patterns_stats'):
@@ -369,10 +363,6 @@ def main():
                     print(stats)
                 except Exception as e:
                     print(f"Błąd generowania statystyk wzorców: {e}")
-
-            # Pytanie o wizualizację grup
-            if len(files_info_list) > 1:
-                show_group_visualizer()
 
         except Exception as e:
             if progress_dialog:
@@ -522,7 +512,6 @@ def main():
 
             # Generuj mapowanie plików
             organization_mode = dialog.result['mode']
-            dry_run = dialog.result['dry_run']
             use_existing = dialog.result['use_existing']
 
             print(f"Generowanie struktury folderów...")
@@ -530,20 +519,20 @@ def main():
                 destination, temp_files_info, organization_mode
             )
 
-            # Wykonaj przenoszenie z opcją używania istniejącej struktury
-            print(f"Wykonywanie {'symulacji' if dry_run else 'przenoszenia'}...")
+            # Wykonaj przenoszenie bez symulacji
+            print(f"Wykonywanie przenoszenia...")
             results = auto_organizer.create_folders_and_move_files(
-                file_mapping, dry_run, use_existing
+                file_mapping, dry_run=False, use_existing_structure=use_existing
             )
 
             # Aktualizuj zmienne globalne
             files_info_list = temp_files_info
 
             # Pokaż wyniki
-            show_organize_results(results, dry_run)
+            show_organize_results(results)
 
-            # Wyświetl tabelę z informacjami
-            show_files_table(files_info_list, category_analyzer)
+            # Wyświetl tabelę z informacjami w głównym oknie
+            show_files_table_inline(files_info_list, category_analyzer, details_frame_ref[0])
 
         except Exception as e:
             if 'progress_dialog' in locals():
@@ -552,7 +541,7 @@ def main():
             traceback.print_exc()
             messagebox.showerror("Błąd", f"Wystąpił błąd podczas automatycznego organizowania:\n{str(e)}")
 
-    def show_organize_results(results, dry_run):
+    def show_organize_results(results):
         """Wyświetla wyniki automatycznego organizowania"""
         # Okno wyników
         results_window = tk.Toplevel(root)
@@ -564,7 +553,7 @@ def main():
         main_frame.pack(fill="both", expand=True)
 
         # Tytuł
-        title = "🎯 WYNIKI SYMULACJI" if dry_run else "✅ WYNIKI ORGANIZOWANIA"
+        title = "✅ WYNIKI ORGANIZOWANIA"
         title_label = ttk.Label(main_frame, text=title, font=("Arial", 14, "bold"))
         title_label.pack(pady=(0, 15))
 
@@ -685,25 +674,42 @@ def main():
         """Konfiguruje rozszerzony interfejs z automatycznym organizowaniem"""
         root.configure(bg='#f5f5f5')
 
-        # Ramka główna
-        main_frame = ttk.Frame(root)
-        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        # Ramka główna z scrollowaniem
+        main_canvas = tk.Canvas(root)
+        main_scrollbar = ttk.Scrollbar(root, orient="vertical", command=main_canvas.yview)
+        scrollable_frame = ttk.Frame(main_canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: main_canvas.configure(scrollregion=main_canvas.bbox("all"))
+        )
+
+        main_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        main_canvas.configure(yscrollcommand=main_scrollbar.set)
+
+        # Pakowanie elementów scrollowania
+        main_canvas.pack(side="left", fill="both", expand=True)
+        main_scrollbar.pack(side="right", fill="y")
+
+        # Ramka z przyciskami na górze
+        top_frame = ttk.Frame(scrollable_frame)
+        top_frame.pack(fill="x", padx=20, pady=20)
 
         # Banner tytułowy
         title = "🎯 SYSTEM ORGANIZACJI PLIKÓW Z DYNAMICZNYMI KATEGORIAMI"
-        title_label = ttk.Label(main_frame, text=title,
+        title_label = ttk.Label(top_frame, text=title,
                                 foreground="darkblue", font=("Arial", 16, "bold"))
         title_label.pack(pady=(0, 10))
 
         # Status analizatora
         status_text = "✅ Dynamiczne kategorie AKTYWNE" if USE_DYNAMIC_ANALYZER else "⚠️ Standardowe kategorie"
-        status_label = ttk.Label(main_frame, text=status_text,
+        status_label = ttk.Label(top_frame, text=status_text,
                                  foreground="green" if USE_DYNAMIC_ANALYZER else "orange",
                                  font=("Arial", 10, "bold"))
         status_label.pack(pady=(0, 20))
 
         # Ramka dla głównych przycisków
-        buttons_frame = ttk.LabelFrame(main_frame, text="Główne funkcje", padding="15")
+        buttons_frame = ttk.LabelFrame(top_frame, text="Główne funkcje", padding="15")
         buttons_frame.pack(fill="x", pady=(0, 20))
 
         # Przycisk automatycznego organizowania - GŁÓWNY
@@ -744,40 +750,20 @@ def main():
             )
             patterns_button.pack(side="left", fill="x", expand=True, padx=(5, 0))
 
-        # Informacje o aplikacji
-        info_frame = ttk.LabelFrame(main_frame, text="Informacje", padding="15")
-        info_frame.pack(fill="both", expand=True)
+        # Przycisk zamknięcia
+        close_button = ttk.Button(buttons_frame, text="Zamknij", command=root.destroy)
+        close_button.pack(fill="x")
 
-        info_text = """🎯 NOWE: DYNAMICZNE KATEGORIE
-• Automatyczne wykrywanie wzorców w nazwach plików
-• Inteligentne grupowanie podobnych plików
-• Uczenie się z historii nazw plików
-• Brak predefiniowanych błędnych kategorii
+        # Ramka dla szczegółów plików (będzie wypełniana po operacjach)
+        details_frame_ref[0] = ttk.LabelFrame(scrollable_frame, text="Szczegóły plików", padding="10")
+        details_frame_ref[0].pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
-📁 PRZYKŁADY DZIAŁANIA:
-• "BudowaFizyczna_Sieci.pdf" → Seria: Budowa (nie fizyka!)
-• "Umowa_Klient_2024.pdf" → Seria: Umowa
-• "Backup_System_03.zip" → Grupa: Backup
-
-🔧 DOSTĘPNE FUNKCJE:"""
-
-        if USE_DYNAMIC_ANALYZER:
-            info_text += "\n✅ Analizator z dynamicznymi kategoriami"
-        if USE_ENHANCED_VISUALIZER:
-            info_text += "\n✅ Rozszerzona wizualizacja grup"
-
-        info_text += "\n\n🚀 System uczy się z nazw plików i tworzy sensowne kategorie!"
-
-        info_label = ttk.Label(info_frame, text=info_text, justify=tk.LEFT,
-                               font=("Arial", 9), wraplength=500)
-        info_label.pack(pady=(0, 15))
-
-        # Ramka dolna
-        bottom_frame = ttk.Frame(main_frame)
-        bottom_frame.pack(fill="x", pady=(10, 0))
-
-        close_button = ttk.Button(bottom_frame, text="Zamknij", command=root.destroy)
-        close_button.pack()
+        # Domyślna informacja
+        default_label = ttk.Label(details_frame_ref[0],
+                                  text="Tu pojawią się szczegóły plików po wykonaniu operacji.",
+                                  font=("Arial", 10, "italic"),
+                                  foreground="gray")
+        default_label.pack(pady=20)
 
         # Konfiguracja stylów
         try:
