@@ -96,6 +96,51 @@ class AutoFolderOrganizer:
 
         return file_mapping
 
+    def generate_folder_structure_custom(self, base_path, files_info_list, hierarchy_levels):
+        """
+        Generuje strukturę folderów na podstawie niestandardowej hierarchii
+        """
+        print(f"\n=== GENEROWANIE STRUKTURY FOLDERÓW (CUSTOM) ===")
+        print(f"Hierarchia: {' -> '.join(hierarchy_levels)}")
+        print(f"Ścieżka bazowa: {base_path}")
+        print(f"Liczba plików: {len(files_info_list)}")
+
+        file_mapping = {}
+        folder_stats = defaultdict(int)
+
+        for file_info in files_info_list:
+            try:
+                # Generuj ścieżkę dla tego pliku używając custom hierarchii
+                target_path = self._generate_file_path_custom(base_path, file_info, hierarchy_levels)
+
+                # Dodaj do mapowania
+                source_path = file_info.source_path
+                file_mapping[source_path] = target_path
+
+                # Aktualizuj statystyki folderów
+                folder_path = os.path.dirname(target_path)
+                folder_stats[folder_path] += 1
+
+                print(f"  {file_info.name}{file_info.extension} -> {os.path.relpath(target_path, base_path)}")
+
+            except Exception as e:
+                print(f"Błąd generowania ścieżki dla {file_info.name}: {e}")
+                traceback.print_exc()
+                continue
+
+        # Wyświetl statystyki
+        print(f"\n=== STATYSTYKI STRUKTURY ===")
+        print(f"Wygenerowano mapowanie dla {len(file_mapping)} plików")
+        print(f"Liczba unikalnych folderów: {len(folder_stats)}")
+
+        # Pokaż największe foldery
+        top_folders = sorted(folder_stats.items(), key=lambda x: x[1], reverse=True)[:10]
+        for folder, count in top_folders:
+            rel_path = os.path.relpath(folder, base_path)
+            print(f"  {rel_path}: {count} plików")
+
+        return file_mapping
+
     def _sanitize_folder_name(self, name):
         """Sanityzuje nazwę folderu dla Windows - usuwa niedozwolone znaki"""
         if not name:
@@ -179,6 +224,52 @@ class AutoFolderOrganizer:
         folder_path = os.path.join(*path_components)
 
         # Dodaj nazwę pliku - sanityzuj też nazwę pliku
+        safe_filename = self._sanitize_filename(f"{file_info.name}{file_info.extension}")
+        file_path = os.path.join(folder_path, safe_filename)
+
+        return file_path
+
+    def _generate_file_path_custom(self, base_path, file_info, hierarchy_levels):
+        """Generuje pełną ścieżkę dla pliku używając niestandardowej hierarchii"""
+        path_components = [base_path]
+
+        # Przejdź przez każdy poziom hierarchii
+        for level in hierarchy_levels:
+            folder_name = None
+
+            if level == "type":
+                # Typ pliku (dokumenty, obrazy, etc.)
+                folder_name = self._get_main_folder(file_info)
+
+            elif level == "extension":
+                # Rozszerzenie pliku
+                ext = file_info.extension.lower() if file_info.extension else "brak_rozszerzenia"
+                folder_name = f"Rozszerzenie {ext}"
+
+            elif level == "date":
+                # Data
+                folder_name = self._get_date_folder(file_info)
+
+            elif level == "size":
+                # Rozmiar
+                folder_name = f"Rozmiar {file_info.size_category}"
+
+            elif level == "dynamic":
+                # Dynamiczne kategorie
+                folder_name = self._get_dynamic_folder(file_info)
+                if not folder_name:
+                    # Jeśli brak dynamicznej kategorii, pomiń ten poziom
+                    continue
+
+            # Dodaj folder do ścieżki (jeśli istnieje)
+            if folder_name:
+                folder_name = self._sanitize_folder_name(folder_name)
+                path_components.append(folder_name)
+
+        # Utwórz ścieżkę folderu
+        folder_path = os.path.join(*path_components)
+
+        # Dodaj nazwę pliku
         safe_filename = self._sanitize_filename(f"{file_info.name}{file_info.extension}")
         file_path = os.path.join(folder_path, safe_filename)
 
@@ -400,6 +491,21 @@ class AutoFolderOrganizer:
 
         return dict(folder_preview)
 
+    def analyze_folder_structure_custom(self, files_info_list, hierarchy_levels):
+        """Analizuje jak będzie wyglądać struktura folderów dla niestandardowej hierarchii"""
+        folder_preview = defaultdict(list)
+
+        for file_info in files_info_list:
+            # Symuluj ścieżkę
+            fake_base = "/example"
+            target_path = self._generate_file_path_custom(fake_base, file_info, hierarchy_levels)
+
+            # Wyciągnij ścieżkę względną folderu
+            relative_folder = os.path.dirname(os.path.relpath(target_path, fake_base))
+            folder_preview[relative_folder].append(file_info.name + file_info.extension)
+
+        return dict(folder_preview)
+
     def _analyze_existing_structure(self, file_mapping):
         """Analizuje istniejącą strukturę folderów w lokalizacji docelowej"""
         existing_structure = {
@@ -573,7 +679,9 @@ class AutoFolderOrganizer:
         return False
 
     def get_organization_modes(self):
-        """Zwraca dostępne tryby organizacji z opisami"""
+        """Zwraca dostępne tryby organizacji z opisami - PRZESTARZAŁE, używaj custom hierarchy"""
+        # Ta metoda jest zachowana dla kompatybilności wstecznej
+        # Nowy system używa niestandardowych hierarchii
         return {
             "simple": {
                 "name": "Prosty",

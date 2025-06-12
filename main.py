@@ -120,11 +120,12 @@ class AutoOrganizeDialog:
         self.files_info = files_info
         self.auto_organizer = auto_organizer
         self.result = None
+        self.hierarchy_levels = []  # Lista poziomów hierarchii
 
         # Utworzenie okna
         self.window = tk.Toplevel(parent)
-        self.window.title("Automatyczne organizowanie plików")
-        self.window.geometry("800x600")
+        self.window.title("Organizowanie plików")
+        self.window.geometry("900x700")
         self.window.resizable(True, True)
 
         # Wyśrodkuj okno
@@ -143,53 +144,79 @@ class AutoOrganizeDialog:
 
         # Tytuł
         title_label = ttk.Label(main_frame,
-                                text="🗂️ AUTOMATYCZNE ORGANIZOWANIE PLIKÓW",
+                                text="🗂️ ORGANIZOWANIE PLIKÓW",
                                 font=("Arial", 14, "bold"),
                                 foreground="darkblue")
         title_label.pack(pady=(0, 20))
 
         # Opis
         desc_label = ttk.Label(main_frame,
-                               text="Wybierz sposób organizacji plików w foldery:",
+                               text="Wybierz kategorie i ich kolejność do organizacji plików:",
                                font=("Arial", 10))
         desc_label.pack(pady=(0, 15))
 
-        # Ramka z opcjami organizacji
-        options_frame = ttk.LabelFrame(main_frame, text="Tryby organizacji", padding="10")
-        options_frame.pack(fill="x", pady=(0, 15))
+        # Główny kontener z dwoma panelami
+        panels_frame = ttk.Frame(main_frame)
+        panels_frame.pack(fill="both", expand=True, pady=(0, 15))
 
-        # Zmienna do przechowywania wybranego trybu
-        self.organization_mode = tk.StringVar(value="full")
+        # Lewy panel - dostępne kategorie
+        left_panel = ttk.LabelFrame(panels_frame, text="Dostępne kategorie", padding="10")
+        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 5))
 
-        # Pobierz dostępne tryby
-        modes = self.auto_organizer.get_organization_modes()
+        # Lista dostępnych kategorii
+        self.available_listbox = tk.Listbox(left_panel, selectmode="single", height=10)
+        self.available_listbox.pack(fill="both", expand=True, pady=(0, 10))
 
-        for mode_key, mode_info in modes.items():
-            # Ramka dla każdej opcji
-            mode_frame = ttk.Frame(options_frame)
-            mode_frame.pack(fill="x", pady=5)
+        # Dodaj dostępne kategorie
+        categories = [
+            ("Typ pliku", "type", "Grupuje według typu (dokumenty, obrazy, audio...)"),
+            ("Rozszerzenie", "extension", "Grupuje według rozszerzenia (.txt, .jpg...)"),
+            ("Data", "date", "Grupuje według daty utworzenia/modyfikacji"),
+            ("Rozmiar", "size", "Grupuje według rozmiaru pliku"),
+            ("Dynamiczne kategorie", "dynamic", "Grupuje według wzorców w nazwach")
+        ]
 
-            # Radiobutton
-            rb = ttk.Radiobutton(mode_frame,
-                                 text=mode_info["name"],
-                                 value=mode_key,
-                                 variable=self.organization_mode,
-                                 command=self.preview_structure)
-            rb.pack(side="left")
+        self.category_info = {}  # Słownik z informacjami o kategoriach
+        for name, key, desc in categories:
+            self.available_listbox.insert(tk.END, name)
+            self.category_info[name] = {"key": key, "desc": desc}
 
-            # Opis
-            desc = ttk.Label(mode_frame,
-                             text=mode_info["description"],
-                             font=("Arial", 9),
-                             foreground="gray")
-            desc.pack(side="left", padx=(10, 0))
+        # Przycisk dodawania
+        add_button = ttk.Button(left_panel, text="Dodaj →", command=self.add_category)
+        add_button.pack()
 
-            # Przykład
-            example = ttk.Label(mode_frame,
-                                text=f"Przykład: {mode_info['example']}",
-                                font=("Arial", 8, "italic"),
-                                foreground="blue")
-            example.pack(side="left", padx=(20, 0))
+        # Prawy panel - hierarchia organizacji
+        right_panel = ttk.LabelFrame(panels_frame, text="Hierarchia organizacji", padding="10")
+        right_panel.pack(side="right", fill="both", expand=True, padx=(5, 0))
+
+        # Lista wybranej hierarchii
+        self.hierarchy_listbox = tk.Listbox(right_panel, selectmode="single", height=10)
+        self.hierarchy_listbox.pack(fill="both", expand=True, pady=(0, 10))
+
+        # Przyciski do manipulacji hierarchią
+        hierarchy_buttons = ttk.Frame(right_panel)
+        hierarchy_buttons.pack(fill="x")
+
+        ttk.Button(hierarchy_buttons, text="↑ W górę", command=self.move_up).pack(side="left", padx=2)
+        ttk.Button(hierarchy_buttons, text="↓ W dół", command=self.move_down).pack(side="left", padx=2)
+        ttk.Button(hierarchy_buttons, text="← Usuń", command=self.remove_category).pack(side="left", padx=2)
+        ttk.Button(hierarchy_buttons, text="Wyczyść", command=self.clear_hierarchy).pack(side="left", padx=2)
+
+        # Przykładowy opis hierarchii
+        example_frame = ttk.Frame(main_frame)
+        example_frame.pack(fill="x", pady=(0, 15))
+
+        example_label = ttk.Label(example_frame,
+                                  text="Przykład: Typ pliku → Data → Dynamiczne kategorie",
+                                  font=("Arial", 9, "italic"),
+                                  foreground="blue")
+        example_label.pack(side="left")
+
+        result_label = ttk.Label(example_frame,
+                                 text="Rezultat: 📁 Dokumenty/2024/03 - March/Seria: Umowy/",
+                                 font=("Arial", 9, "italic"),
+                                 foreground="green")
+        result_label.pack(side="left", padx=(20, 0))
 
         # Ramka z podglądem
         preview_frame = ttk.LabelFrame(main_frame, text="Podgląd struktury folderów", padding="10")
@@ -233,17 +260,124 @@ class AutoOrganizeDialog:
         ttk.Button(action_buttons, text="Anuluj", command=self.cancel).pack(side="right", padx=(5, 0))
         ttk.Button(action_buttons, text="Wykonaj", command=self.execute).pack(side="right")
 
+        # Domyślna hierarchia
+        self.set_default_hierarchy()
+
+    def set_default_hierarchy(self):
+        """Ustawia domyślną hierarchię"""
+        default_hierarchy = ["Typ pliku", "Data"]
+        for cat in default_hierarchy:
+            if cat in self.category_info:
+                self.hierarchy_listbox.insert(tk.END, cat)
+                self.hierarchy_levels.append(self.category_info[cat]["key"])
+
+    def add_category(self):
+        """Dodaje wybraną kategorię do hierarchii"""
+        selection = self.available_listbox.curselection()
+        if not selection:
+            return
+
+        category_name = self.available_listbox.get(selection[0])
+
+        # Sprawdź czy kategoria już jest w hierarchii
+        if category_name in self.hierarchy_listbox.get(0, tk.END):
+            messagebox.showwarning("Uwaga", f"Kategoria '{category_name}' już jest w hierarchii.")
+            return
+
+        # Dodaj do hierarchii
+        self.hierarchy_listbox.insert(tk.END, category_name)
+        self.hierarchy_levels.append(self.category_info[category_name]["key"])
+
+        # Odśwież podgląd
+        self.preview_structure()
+
+    def remove_category(self):
+        """Usuwa wybraną kategorię z hierarchii"""
+        selection = self.hierarchy_listbox.curselection()
+        if not selection:
+            return
+
+        index = selection[0]
+        self.hierarchy_listbox.delete(index)
+        del self.hierarchy_levels[index]
+
+        # Odśwież podgląd
+        self.preview_structure()
+
+    def move_up(self):
+        """Przesuwa wybraną kategorię w górę"""
+        selection = self.hierarchy_listbox.curselection()
+        if not selection or selection[0] == 0:
+            return
+
+        index = selection[0]
+        # Pobierz elementy
+        item = self.hierarchy_listbox.get(index)
+        level = self.hierarchy_levels[index]
+
+        # Usuń i wstaw wyżej
+        self.hierarchy_listbox.delete(index)
+        self.hierarchy_listbox.insert(index - 1, item)
+
+        del self.hierarchy_levels[index]
+        self.hierarchy_levels.insert(index - 1, level)
+
+        # Zaznacz przesunięty element
+        self.hierarchy_listbox.selection_set(index - 1)
+
+        # Odśwież podgląd
+        self.preview_structure()
+
+    def move_down(self):
+        """Przesuwa wybraną kategorię w dół"""
+        selection = self.hierarchy_listbox.curselection()
+        if not selection or selection[0] == self.hierarchy_listbox.size() - 1:
+            return
+
+        index = selection[0]
+        # Pobierz elementy
+        item = self.hierarchy_listbox.get(index)
+        level = self.hierarchy_levels[index]
+
+        # Usuń i wstaw niżej
+        self.hierarchy_listbox.delete(index)
+        self.hierarchy_listbox.insert(index + 1, item)
+
+        del self.hierarchy_levels[index]
+        self.hierarchy_levels.insert(index + 1, level)
+
+        # Zaznacz przesunięty element
+        self.hierarchy_listbox.selection_set(index + 1)
+
+        # Odśwież podgląd
+        self.preview_structure()
+
+    def clear_hierarchy(self):
+        """Czyści całą hierarchię"""
+        self.hierarchy_listbox.delete(0, tk.END)
+        self.hierarchy_levels.clear()
+        self.preview_structure()
+
     def preview_structure(self):
         """Generuje podgląd struktury folderów"""
         try:
-            mode = self.organization_mode.get()
-            structure = self.auto_organizer.analyze_folder_structure(self.files_info, mode)
+            if not self.hierarchy_levels:
+                self.preview_text.delete('1.0', tk.END)
+                self.preview_text.insert('1.0', "Wybierz kategorie do utworzenia hierarchii folderów.")
+                return
+
+            # Użyj custom hierarchy w organizerze
+            structure = self.auto_organizer.analyze_folder_structure_custom(
+                self.files_info,
+                self.hierarchy_levels
+            )
 
             # Wyczyść poprzedni podgląd
             self.preview_text.delete('1.0', tk.END)
 
             # Generuj tekst podglądu
-            preview_text = f"Podgląd struktury dla trybu: {mode}\n"
+            hierarchy_text = " → ".join(self.hierarchy_listbox.get(0, tk.END))
+            preview_text = f"Hierarchia: {hierarchy_text}\n"
             preview_text += "=" * 50 + "\n\n"
 
             # Sortuj foldery alfabetycznie
@@ -281,8 +415,12 @@ class AutoOrganizeDialog:
 
     def execute(self):
         """Wykonuje automatyczne organizowanie"""
+        if not self.hierarchy_levels:
+            messagebox.showwarning("Uwaga", "Wybierz przynajmniej jedną kategorię do organizacji.")
+            return
+
         self.result = {
-            'mode': self.organization_mode.get(),
+            'hierarchy': self.hierarchy_levels,
             'use_existing': self.use_existing_var.get(),
             'execute': True
         }
@@ -315,63 +453,7 @@ def main():
     # Inicjalizacja organizatora folderów
     auto_organizer = AutoFolderOrganizer(category_analyzer)
 
-    def start_moving_process():
-        """Standardowy proces przenoszenia plików"""
-        nonlocal files_info_list
-
-        files = select_files()
-        if not files:
-            messagebox.showinfo("Informacja", "Nie wybrano żadnych plików.")
-            return
-
-        print(f"Wybrano {len(files)} plików do analizy:")
-
-        progress_dialog = None
-        if len(files) > 10:
-            progress_dialog = ProgressDialog(root, "Analiza plików")
-            progress_dialog.update_status("Analizuję nazwy plików...",
-                                          f"Wykrywanie dynamicznych wzorców w {len(files)} plikach")
-
-        try:
-            if progress_dialog:
-                progress_dialog.update_status("Analiza zakończona!")
-                time.sleep(1)
-                progress_dialog.close()
-
-            destination = select_destination()
-            if not destination:
-                messagebox.showinfo("Informacja", "Nie wybrano folderu docelowego.")
-                return
-
-            print(f"Rozpoczynam przenoszenie plików z analizą...")
-            start_time = time.time()
-
-            files_info_list = move_files(files, destination)
-
-            analysis_time = time.time() - start_time
-            print(
-                f"Zakończono przenoszenie plików w {analysis_time:.2f} sekund. Otrzymano {len(files_info_list)} informacji o plikach.")
-
-            # Wyświetlenie tabeli z informacjami o plikach w głównym oknie
-            show_files_table_inline(files_info_list, category_analyzer, details_frame_ref[0])
-
-            # Wyświetl statystyki dynamicznych wzorców (jeśli dostępne)
-            if USE_DYNAMIC_ANALYZER and hasattr(category_analyzer, 'get_dynamic_patterns_stats'):
-                try:
-                    stats = category_analyzer.get_dynamic_patterns_stats()
-                    print(f"\n📊 STATYSTYKI DYNAMICZNYCH WZORCÓW:")
-                    print(stats)
-                except Exception as e:
-                    print(f"Błąd generowania statystyk wzorców: {e}")
-
-        except Exception as e:
-            if progress_dialog:
-                progress_dialog.close()
-            print(f"KRYTYCZNY BŁĄD w procesie przenoszenia: {e}")
-            traceback.print_exc()
-            messagebox.showerror("Błąd", f"Wystąpił błąd podczas przenoszenia plików:\n{str(e)}")
-
-    def start_auto_organize_process():
+    def start_organize_process():
         """Proces z automatycznym organizowaniem folderów"""
         nonlocal files_info_list
 
@@ -380,7 +462,7 @@ def main():
             messagebox.showinfo("Informacja", "Nie wybrano żadnych plików.")
             return
 
-        print(f"Wybrano {len(files)} plików do automatycznego organizowania:")
+        print(f"Wybrano {len(files)} plików do organizowania:")
 
         # Analizuj pliki bez przenoszenia
         progress_dialog = ProgressDialog(root, "Analiza plików")
@@ -501,7 +583,7 @@ def main():
             root.wait_window(dialog.window)
 
             if not dialog.result or not dialog.result['execute']:
-                print("Anulowano automatyczne organizowanie")
+                print("Anulowano organizowanie")
                 return
 
             # Wybierz folder docelowy
@@ -511,12 +593,12 @@ def main():
                 return
 
             # Generuj mapowanie plików
-            organization_mode = dialog.result['mode']
+            hierarchy = dialog.result['hierarchy']
             use_existing = dialog.result['use_existing']
 
-            print(f"Generowanie struktury folderów...")
-            file_mapping = auto_organizer.generate_folder_structure(
-                destination, temp_files_info, organization_mode
+            print(f"Generowanie struktury folderów z hierarchią: {hierarchy}...")
+            file_mapping = auto_organizer.generate_folder_structure_custom(
+                destination, temp_files_info, hierarchy
             )
 
             # Wykonaj przenoszenie bez symulacji
@@ -537,15 +619,15 @@ def main():
         except Exception as e:
             if 'progress_dialog' in locals():
                 progress_dialog.close()
-            print(f"BŁĄD w procesie automatycznego organizowania: {e}")
+            print(f"BŁĄD w procesie organizowania: {e}")
             traceback.print_exc()
-            messagebox.showerror("Błąd", f"Wystąpił błąd podczas automatycznego organizowania:\n{str(e)}")
+            messagebox.showerror("Błąd", f"Wystąpił błąd podczas organizowania:\n{str(e)}")
 
     def show_organize_results(results):
         """Wyświetla wyniki automatycznego organizowania"""
         # Okno wyników
         results_window = tk.Toplevel(root)
-        results_window.title("Wyniki automatycznego organizowania")
+        results_window.title("Wyniki organizowania")
         results_window.geometry("600x500")
 
         # Ramka główna
@@ -670,8 +752,8 @@ def main():
         except Exception as e:
             messagebox.showerror("Błąd", f"Błąd wyświetlania wzorców: {e}")
 
-    def setup_enhanced_ui_with_auto_organize(root):
-        """Konfiguruje rozszerzony interfejs z automatycznym organizowaniem"""
+    def setup_enhanced_ui_with_organize(root):
+        """Konfiguruje rozszerzony interfejs z organizowaniem"""
         root.configure(bg='#f5f5f5')
 
         # Ramka główna z scrollowaniem
@@ -712,22 +794,14 @@ def main():
         buttons_frame = ttk.LabelFrame(top_frame, text="Główne funkcje", padding="15")
         buttons_frame.pack(fill="x", pady=(0, 20))
 
-        # Przycisk automatycznego organizowania - GŁÓWNY
-        auto_organize_button = ttk.Button(
+        # Przycisk organizowania - GŁÓWNY
+        organize_button = ttk.Button(
             buttons_frame,
-            text="🗂️ Automatyczne Organizowanie",
-            command=start_auto_organize_process,
+            text="🗂️ Organizowanie",
+            command=start_organize_process,
             style='Accent.TButton'
         )
-        auto_organize_button.pack(fill="x", pady=(0, 10))
-
-        # Przycisk standardowego przenoszenia
-        standard_button = ttk.Button(
-            buttons_frame,
-            text="📁 Standardowe Przenoszenie",
-            command=start_moving_process
-        )
-        standard_button.pack(fill="x", pady=(0, 10))
+        organize_button.pack(fill="x", pady=(0, 10))
 
         # Dodatkowe przyciski w rzędzie
         buttons_row = ttk.Frame(buttons_frame)
@@ -773,7 +847,7 @@ def main():
             pass
 
     # Konfiguracja interfejsu użytkownika
-    setup_enhanced_ui_with_auto_organize(root)
+    setup_enhanced_ui_with_organize(root)
 
     # Uruchomienie głównej pętli aplikacji
     root.mainloop()
