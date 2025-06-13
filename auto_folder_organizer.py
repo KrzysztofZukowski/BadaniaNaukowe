@@ -1,4 +1,4 @@
-# auto_folder_organizer.py - NAPRAWIONA wersja z uproszczonymi kategoriami
+# auto_folder_organizer.py
 import os
 import shutil
 import re

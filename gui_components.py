@@ -1,4 +1,4 @@
-# gui_components.py - poprawiona wersja z lepszym grupowaniem
+# gui_components.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 from data_export import export_to_csv

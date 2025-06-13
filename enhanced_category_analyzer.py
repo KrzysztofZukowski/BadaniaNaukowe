@@ -1,4 +1,4 @@
-# file_group_visualizer.py - poprawiona wersja z logicznym grupowaniem
+# file_group_visualizer.py
 import tkinter as tk
 from tkinter import ttk
 import os

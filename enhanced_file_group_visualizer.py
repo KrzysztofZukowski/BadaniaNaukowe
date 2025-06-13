@@ -1,4 +1,4 @@
-# enhanced_file_group_visualizer.py - POPRAWIONA WERSJA z czystym grupowaniem
+# enhanced_file_group_visualizer.py
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 from collections import defaultdict, Counter
@@ -19,7 +19,6 @@ def format_size(size_in_bytes):
 
 
 class EnhancedFileGroupVisualizer:
-    """Ulepszona klasa do wizualizacji grup plików z CZYSTĄ logiką grupowania"""
 
     def __init__(self, parent, files_info, category_analyzer):
         self.parent = parent

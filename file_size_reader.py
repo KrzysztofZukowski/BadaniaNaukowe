@@ -1,4 +1,4 @@
-# file_size_reader.py - pełna wersja
+# file_size_reader.py
 import os
 import traceback
 import subprocess
@@ -6,7 +6,6 @@ import platform
 
 
 class FileSizeReader:
-    """Specjalna klasa do niezawodnego odczytu rozmiaru pliku"""
 
     @staticmethod
     def get_file_size(file_path):
@@ -65,7 +64,7 @@ class FileSizeReader:
 
     @staticmethod
     def _try_os_stat(file_path):
-        """Próbuje odczytać rozmiar używając os.stat"""
+
         print("Próba metody: os.stat")
         try:
             file_stats = os.stat(file_path)
@@ -78,7 +77,7 @@ class FileSizeReader:
 
     @staticmethod
     def _try_os_path_getsize(file_path):
-        """Próbuje odczytać rozmiar używając os.path.getsize"""
+
         print("Próba metody: os.path.getsize")
         try:
             size = os.path.getsize(file_path)
@@ -90,7 +89,7 @@ class FileSizeReader:
 
     @staticmethod
     def _try_file_read(file_path):
-        """Próbuje odczytać rozmiar otwierając plik"""
+
         print("Próba metody: odczyt pliku")
         try:
             with open(file_path, 'rb') as f:
@@ -104,7 +103,7 @@ class FileSizeReader:
 
     @staticmethod
     def _try_subprocess(file_path):
-        """Próbuje odczytać rozmiar używając poleceń systemowych"""
+
         print("Próba metody: polecenia systemowe")
         try:
             system = platform.system()

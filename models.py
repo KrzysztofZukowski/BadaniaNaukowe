@@ -23,14 +23,6 @@ class FileInfo:
         # Ustawiamy timestamp na aktualny czas w momencie utworzenia obiektu
         self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Znajdź klasę FileInfo w pliku models.py
-        # i zmodyfikuj część dotyczącą file_size:
-
-        # Podstawowe metadane
-        # Upewniamy się, że file_size jest liczbą
-        # Znajdź klasę FileInfo w pliku models.py
-        # i zmodyfikuj część dotyczącą file_size:
-
         # Podstawowe metadane
         # Upewniamy się, że file_size jest liczbą
         try:

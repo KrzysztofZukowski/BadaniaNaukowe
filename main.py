@@ -1,4 +1,4 @@
-# main.py - NAPRAWIONA wersja z prostymi kategoriami dynamicznymi
+# main.py
 import tkinter as tk
 from tkinter import messagebox, ttk
 import os

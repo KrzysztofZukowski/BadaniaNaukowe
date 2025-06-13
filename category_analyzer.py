@@ -1,4 +1,4 @@
-# category_analyzer.py - UPROSZCZONA wersja z dynamicznymi kategoriami
+# category_analyzer.py
 import os
 import re
 import json
@@ -6,7 +6,7 @@ import traceback
 from datetime import datetime
 from collections import Counter, defaultdict
 
-# Zostaw TYLKO rozszerzenia - reszta będzie dynamiczna
+#Rozszerzenia - reszta będzie dynamiczna
 FILE_CATEGORIES = {
     'dokumenty_tekstowe': ['.txt', '.doc', '.docx', '.rtf', '.odt', '.md'],
     'dokumenty_pdf': ['.pdf'],
@@ -41,8 +41,7 @@ for category, extensions in FILE_CATEGORIES.items():
         if ext not in EXTENSION_TO_CATEGORY:
             EXTENSION_TO_CATEGORY[ext.lower()] = category
 
-# USUŃ wszystkie predefiniowane wzorce - będziemy używać tylko dynamicznych!
-# Zostaw tylko kilka oczywistych wzorców które naprawdę działają
+#Kilka oczywistych wzorców które naprawdę działają
 SIMPLE_PATTERNS = {
     'backup': [r'\bbackup\b', r'\bkopia\b', r'\bbak\b'],
     'config': [r'\bconfig\b', r'\bkonfig\b', r'\bustawienia\b', r'\bsettings\b'],
@@ -148,7 +147,7 @@ class CategoryAnalyzer:
                     results['wszystkie_kategorie'].add(pattern_name)
                     break
 
-        # 3. NOWE: Dynamiczne kategorie z nazwy pliku
+        # 3. Dynamiczne kategorie z nazwy pliku
         dynamic_categories = self._extract_dynamic_categories(name_lower)
         results['kategoria_nazwy'].extend(dynamic_categories)
         for cat in dynamic_categories:
@@ -177,7 +176,7 @@ class CategoryAnalyzer:
         return results
 
     def _extract_dynamic_categories(self, filename):
-        """NOWA: Ekstraktuje dynamiczne kategorie z nazwy pliku"""
+
         categories = []
 
         # Usuń cyfry i znaki specjalne, zostaw tylko słowa

@@ -1,4 +1,4 @@
-# file_operations.py - naprawiona wersja
+# file_operations.py
 import os
 import shutil
 import tkinter as tk
